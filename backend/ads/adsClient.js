@@ -145,7 +145,11 @@ class ADSClient {
       await this.writeSymbol('GVL_Command.StartProcess', true);
       // Wait a bit and reset the command
       setTimeout(async () => {
-        await this.writeSymbol('GVL_Command.StartProcess', false);
+        try {
+          await this.writeSymbol('GVL_Command.StartProcess', false);
+        } catch (error) {
+          console.error('Error resetting StartProcess flag:', error.message);
+        }
       }, 500);
       return { success: true };
     } catch (error) {
@@ -158,7 +162,11 @@ class ADSClient {
     try {
       await this.writeSymbol('GVL_Command.ResetProcess', true);
       setTimeout(async () => {
-        await this.writeSymbol('GVL_Command.ResetProcess', false);
+        try {
+          await this.writeSymbol('GVL_Command.ResetProcess', false);
+        } catch (error) {
+          console.error('Error resetting ResetProcess flag:', error.message);
+        }
       }, 500);
       return { success: true };
     } catch (error) {
