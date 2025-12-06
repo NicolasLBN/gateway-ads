@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="MAIN" Id="{12345678-1234-1234-1234-123456789010}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+    fbProcess : FB_ProcessStateMachine;
+    fbSim : FB_MachineSimulation;
+    
+    // Edge detection for start command
+    StartEdge : R_TRIG;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Simulation globale de la machine
+fbSim();
+
+// Detection du front montant de la commande Start
+StartEdge(CLK := GVL_Command.StartProcess);
+
+// Machine d'état du process
+fbProcess(Start := StartEdge.Q);
+
+// Fake ADS connection toggle for simulation
+// In real application, this would be controlled by the ADS client
+IF NOT GVL_Command.AdsConnected THEN
+    GVL_Command.AdsConnected := TRUE;
+END_IF
+
+// Auto-reset process done flag after some time
+// This allows running another process]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

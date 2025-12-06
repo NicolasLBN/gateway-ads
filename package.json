@@ -1,0 +1,30 @@
+{
+  "name": "gateway-ads",
+  "version": "1.0.0",
+  "description": "Industrial application with React frontend, Node.js backend, and TwinCAT PLC simulator",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "industrial",
+    "automation",
+    "plc",
+    "twincat",
+    "ads",
+    "react",
+    "node"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NicolasLBN/gateway-ads.git"
+  }
+}

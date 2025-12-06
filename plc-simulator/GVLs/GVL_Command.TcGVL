@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <GVL Name="GVL_Command" Id="{12345678-1234-1234-1234-123456789004}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+    StartProcess : BOOL := FALSE;
+    ResetProcess : BOOL := FALSE;
+
+    AdsConnected : BOOL := FALSE;  // Node.js met TRUE si connect
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

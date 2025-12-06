@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_MachineSimulation" Id="{12345678-1234-1234-1234-123456789012}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MachineSimulation
+VAR
+    RandomSeed : DINT := 12345;
+    Counter : UDINT := 0;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Counter := Counter + 1;
+
+// Simple random simulation
+RandomSeed := (RandomSeed * 1103515245 + 12345) MOD 2147483647;
+
+// Simulate machine behavior based on process step
+IF GVL_Process.CurrentStep > 0 AND GVL_Process.CurrentStep < 7 THEN
+    // Motor running
+    GVL_Machine.MotorSpeed := 1500.0 + DINT_TO_REAL(RandomSeed MOD 200) - 100.0;
+    
+    // Temperature increases during process
+    IF GVL_Machine.MotorTemperature < 35.0 THEN
+        GVL_Machine.MotorTemperature := GVL_Machine.MotorTemperature + 0.01;
+    END_IF
+    
+    // Oil pressure depends on speed
+    GVL_Machine.OilPressure := 3.0 + (GVL_Machine.MotorSpeed - 1500.0) / 1000.0;
+    
+ELSIF GVL_Process.CurrentStep = 0 THEN
+    // Idle state
+    GVL_Machine.MotorSpeed := 0.0;
+    
+    // Temperature cools down
+    IF GVL_Machine.MotorTemperature > 25.0 THEN
+        GVL_Machine.MotorTemperature := GVL_Machine.MotorTemperature - 0.02;
+    END_IF
+    
+    GVL_Machine.OilPressure := 3.0;
+    
+ELSE
+    // Done state
+    GVL_Machine.MotorSpeed := 0.0;
+    GVL_Machine.OilPressure := 3.0;
+END_IF
+
+// Warning flags
+GVL_Machine.TempWarning := (GVL_Machine.MotorTemperature > 65.0);
+GVL_Machine.PressureWarning := (GVL_Machine.OilPressure < 2.0) OR (GVL_Machine.OilPressure > 5.0);
+GVL_Machine.SpeedWarning := (GVL_Machine.MotorSpeed > 2000.0);
+
+// Simulate random anomaly (1% chance per cycle)
+IF (RandomSeed MOD 100) = 0 AND GVL_Process.CurrentStep > 0 AND GVL_Process.CurrentStep < 7 THEN
+    GVL_Process.ErrorCode := 1;
+    GVL_Process.ErrorText := 'Random anomaly detected';
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

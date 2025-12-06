@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <GVL Name="GVL_Process" Id="{12345678-1234-1234-1234-123456789002}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+    CurrentStep : INT := 0;           // 0:Idle, 1..7 steps
+    StepName : STRING(50) := 'Idle';
+
+    Progress : REAL := 0.0;           // Global %
+    StepProgress : REAL := 0.0;       // Step %
+    
+    StepTime_s : UDINT := 0;          // seconds in current step
+    TotalTime_s : UDINT := 0;
+
+    ErrorCode : INT := 0;
+    ErrorText : STRING(100) := '';
+
+    ProcessDone : BOOL := FALSE;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
