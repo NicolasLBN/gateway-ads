@@ -48,6 +48,8 @@ async function generatePDF(reportData) {
     const html = Mustache.render(template, templateData);
 
     // Launch browser and generate PDF
+    // Note: --no-sandbox flags are required for containerized environments
+    // In production, consider using a properly sandboxed environment
     const browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox'],

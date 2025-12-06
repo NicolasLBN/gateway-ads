@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const { generatePDF } = require('../pdf/pdfGenerator');
 
 const HISTORY_FILE = path.join(__dirname, '../data/history.json');
@@ -73,7 +74,7 @@ router.post('/', async (req, res) => {
     const history = await loadHistory();
     
     const report = {
-      id: `report-${Date.now()}`,
+      id: `report-${uuidv4()}`,
       recipeName,
       machineName: machineName || 'Unknown Machine',
       date: new Date().toISOString(),
