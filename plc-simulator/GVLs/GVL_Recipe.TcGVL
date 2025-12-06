@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <GVL Name="GVL_Recipe" Id="{12345678-1234-1234-1234-123456789001}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+    RecipeName : STRING(50) := '';
+    NumIngredients : UDINT := 0;
+
+    IngredientName : ARRAY[1..10] OF STRING(40);
+    IngredientQuantity : ARRAY[1..10] OF REAL;     // en grammes
+    IngredientVolume : ARRAY[1..10] OF REAL;       // en ml
+    IngredientMolarMass : ARRAY[1..10] OF REAL;    // g/L
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

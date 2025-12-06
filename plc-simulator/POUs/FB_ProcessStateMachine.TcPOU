@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_ProcessStateMachine" Id="{12345678-1234-1234-1234-123456789011}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ProcessStateMachine
+VAR_INPUT
+    Start : BOOL;
+END_VAR
+VAR
+    StepTimer : TON;
+    RandomValue : DINT;
+END_VAR
+
+// Durée de chaque étape
+VAR CONSTANT
+    T_PREPARE : TIME := T#5s;
+    T_DOSE_A : TIME := T#7s;
+    T_DOSE_B : TIME := T#7s;
+    T_MIX : TIME := T#10s;
+    T_VERIFY : TIME := T#4s;
+    T_FINALIZE : TIME := T#3s;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE GVL_Process.CurrentStep OF
+
+    0: // Idle
+        GVL_Process.StepName := 'Idle';
+        GVL_Process.ProcessDone := FALSE;
+        GVL_Process.Progress := 0.0;
+        GVL_Process.StepProgress := 0.0;
+        GVL_Process.StepTime_s := 0;
+        
+        IF Start THEN
+            GVL_Process.CurrentStep := 1;
+            GVL_Process.TotalTime_s := 0;
+            GVL_Process.ErrorCode := 0;
+            GVL_Process.ErrorText := '';
+        END_IF
+
+    1: // Preparation
+        GVL_Process.StepName := 'Preparation';
+        StepTimer(IN := TRUE, PT := T_PREPARE);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_PREPARE);
+        GVL_Process.Progress := GVL_Process.StepProgress * 0.1;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 2;
+        END_IF
+
+    2: // Dose Ingredient A
+        GVL_Process.StepName := 'Dosing Ingredient A';
+        StepTimer(IN := TRUE, PT := T_DOSE_A);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_DOSE_A);
+        GVL_Process.Progress := 0.1 + GVL_Process.StepProgress * 0.2;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 3;
+        END_IF
+
+    3: // Dose Ingredient B
+        GVL_Process.StepName := 'Dosing Ingredient B';
+        StepTimer(IN := TRUE, PT := T_DOSE_B);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_DOSE_B);
+        GVL_Process.Progress := 0.3 + GVL_Process.StepProgress * 0.2;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 4;
+        END_IF
+
+    4: // Mixing
+        GVL_Process.StepName := 'Mixing';
+        StepTimer(IN := TRUE, PT := T_MIX);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_MIX);
+        GVL_Process.Progress := 0.5 + GVL_Process.StepProgress * 0.3;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 5;
+        END_IF
+
+    5: // Verification
+        GVL_Process.StepName := 'Verification';
+        StepTimer(IN := TRUE, PT := T_VERIFY);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_VERIFY);
+        GVL_Process.Progress := 0.8 + GVL_Process.StepProgress * 0.1;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 6;
+        END_IF
+
+    6: // Finalizing
+        GVL_Process.StepName := 'Finalizing';
+        StepTimer(IN := TRUE, PT := T_FINALIZE);
+
+        GVL_Process.StepProgress := TIME_TO_REAL(StepTimer.ET) / TIME_TO_REAL(T_FINALIZE);
+        GVL_Process.Progress := 0.9 + GVL_Process.StepProgress * 0.1;
+        GVL_Process.StepTime_s := TIME_TO_DINT(StepTimer.ET) / 1000;
+
+        IF StepTimer.Q THEN
+            StepTimer(IN := FALSE);
+            GVL_Process.CurrentStep := 7;
+        END_IF
+
+    7: // Done
+        GVL_Process.StepName := 'Done';
+        GVL_Process.Progress := 1.0;
+        GVL_Process.ProcessDone := TRUE;
+        GVL_Process.StepProgress := 1.0;
+        
+        // Reset to idle after some time or manual reset
+        IF GVL_Command.ResetProcess THEN
+            GVL_Process.CurrentStep := 0;
+        END_IF
+END_CASE
+
+// Update total time
+IF GVL_Process.CurrentStep > 0 AND GVL_Process.CurrentStep < 7 THEN
+    GVL_Process.TotalTime_s := GVL_Process.TotalTime_s + 1;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

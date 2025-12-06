@@ -1,0 +1,25 @@
+{
+  "name": "industrial-app-backend",
+  "version": "1.0.0",
+  "description": "Industrial application backend with ADS communication",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["industrial", "ads", "plc", "twincat"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "ws": "^8.14.2",
+    "node-ads": "^4.1.3",
+    "puppeteer": "^21.5.2",
+    "mustache": "^4.2.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

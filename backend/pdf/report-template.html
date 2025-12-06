@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Rapport de Recette</title>
+
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; }
+  h1 { text-align: center; margin-bottom: 10px; }
+  h2 { margin-top: 40px; }
+  .meta {
+    border: 1px solid #444;
+    padding: 16px;
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+  }
+  th, td {
+    border: 1px solid #666;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
+    background: #eee;
+    font-weight: bold;
+  }
+  .ok { color: green; }
+  .warn { color: orange; }
+  .err { color: red; }
+</style>
+
+</head>
+<body>
+
+<h1>Rapport de Recette</h1>
+
+<div class="meta">
+  <p><strong>Nom de la recette :</strong> {{recipeName}}</p>
+  <p><strong>Date :</strong> {{date}}</p>
+  <p><strong>Machine :</strong> {{machineName}}</p>
+
+  <h3>Produits :</h3>
+  <ul>
+    {{#products}}
+      <li>{{name}} — quantité: {{quantity}}g — volume: {{volume}}ml — masse molaire: {{molar}} g/L</li>
+    {{/products}}
+  </ul>
+</div>
+
+
+<h2>Étapes du processus</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Étape</th>
+  <th>Temps (s)</th>
+  <th>Température moteur (°C)</th>
+  <th>Pression huile (bar)</th>
+  <th>Vitesse moteur (RPM)</th>
+  <th>Remarque</th>
+</tr>
+</thead>
+
+<tbody>
+  {{#steps}}
+  <tr>
+    <td>{{name}}</td>
+    <td>{{time}}</td>
+    <td>{{temp}}</td>
+    <td>{{pressure}}</td>
+    <td>{{speed}}</td>
+    <td>{{remark}}</td>
+  </tr>
+  {{/steps}}
+</tbody>
+</table>
+
+</body>
+</html>
