@@ -1,17 +1,30 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Group, Title, Button } from '@mantine/core';
-import { IconHome, IconFileText, IconHistory } from '@tabler/icons-react';
+import { Group, Title, Button, Badge } from '@mantine/core';
+import { IconHome, IconFileText, IconHistory, IconSettings, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import { useStore } from '../hooks/useStore';
 
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isConnected, selectedMachine } = useStore();
 
   return (
     <Group justify="space-between" h="100%" px="md">
-      <Title order={3} style={{ color: '#fff' }}>
-        🏭 Industrial App
-      </Title>
+      <Group>
+        <Title order={3}>
+          🏭 Industrial App
+        </Title>
+        <Badge
+          size="lg"
+          color={isConnected ? 'green' : 'red'}
+          leftSection={
+            isConnected ? <IconCircleCheck size={14} /> : <IconCircleX size={14} />
+          }
+        >
+          {isConnected ? `Connected: ${selectedMachine?.name || 'Unknown'}` : 'Disconnected'}
+        </Badge>
+      </Group>
       <Group>
         <Button
           variant={location.pathname === '/' ? 'filled' : 'subtle'}
@@ -33,6 +46,13 @@ function Header() {
           onClick={() => navigate('/history')}
         >
           History
+        </Button>
+        <Button
+          variant={location.pathname === '/machine-settings' ? 'filled' : 'subtle'}
+          leftSection={<IconSettings size={16} />}
+          onClick={() => navigate('/machine-settings')}
+        >
+          Machine Settings
         </Button>
       </Group>
     </Group>

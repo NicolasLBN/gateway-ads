@@ -4,6 +4,7 @@ import { AppShell } from '@mantine/core';
 import HomePage from './pages/HomePage';
 import NewRecipePage from './pages/NewRecipePage';
 import HistoryPage from './pages/HistoryPage';
+import MachineSettingsPage from './pages/MachineSettingsPage';
 import Header from './components/Header';
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         padding="md"
         styles={(theme) => ({
           main: {
-            backgroundColor: theme.colors.dark[8],
+            backgroundColor: '#f5f5f5',
             minHeight: '100vh',
           },
         })}
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/new-recipe" element={<NewRecipePage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/machine-settings" element={<MachineSettingsPage />} />
           </Routes>
         </AppShell.Main>
       </AppShell>
