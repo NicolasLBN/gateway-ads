@@ -86,8 +86,8 @@ const fakeHistory = [
 
 function HistoryPage() {
   const navigate = useNavigate();
-  const [history, setHistory] = useState(fakeHistory);
-  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -101,11 +101,13 @@ function HistoryPage() {
       const result = await api.getHistory();
       if (result.success && result.history && result.history.length > 0) {
         setHistory(result.history);
+      } else {
+        // Use fake data when no real history exists
+        setHistory(fakeHistory);
       }
-      // If no real history, keep fake data
     } catch (err) {
-      // Keep fake data on error
-      console.log('Using fake history data');
+      // Use fake data on error
+      setHistory(fakeHistory);
     } finally {
       setLoading(false);
     }
