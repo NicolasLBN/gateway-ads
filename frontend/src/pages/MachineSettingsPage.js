@@ -17,8 +17,17 @@ function MachineSettingsPage() {
           variant="subtle"
           leftSection={<IconArrowLeft size={16} />}
           onClick={() => navigate('/')}
+          styles={{
+            root: {
+              backgroundColor: '#61db34',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#4fb828',
+              },
+            },
+          }}
         >
-          Back to Dashboard
+          Back to Home
         </Button>
       </Group>
 
