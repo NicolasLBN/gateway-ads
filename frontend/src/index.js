@@ -11,6 +11,14 @@ root.render(
       theme={{
         primaryColor: 'blue',
         fontFamily: 'Arial, sans-serif',
+        components: {
+          Button: {
+            defaultProps: {
+              size: 'lg',
+              radius: 'xl',
+            },
+          },
+        },
       }}
       withGlobalStyles
       withNormalizeCSS

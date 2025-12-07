@@ -40,6 +40,8 @@ function NewRecipePage() {
   const [ingredients, setIngredients] = useState([
     { name: '', quantity: 0, volume: 0, molarMass: 0 },
   ]);
+  const [preparationVolume, setPreparationVolume] = useState(0);
+  const [preparationConcentration, setPreparationConcentration] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState(null);
@@ -163,8 +165,17 @@ function NewRecipePage() {
           variant="subtle"
           leftSection={<IconArrowLeft size={16} />}
           onClick={() => navigate('/')}
+          styles={{
+            root: {
+              backgroundColor: '#61db34',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#4fb828',
+              },
+            },
+          }}
         >
-          Back to Dashboard
+          Back to Home
         </Button>
       </Group>
 
@@ -202,6 +213,35 @@ function NewRecipePage() {
                 {...register('recipeName')}
                 mb="md"
               />
+
+              <Text fw={500} mb="xs">
+                Preparation
+              </Text>
+              
+              <Grid gutter="md" mb="md">
+                <Grid.Col span={6}>
+                  <NumberInput
+                    label="Volume (L)"
+                    placeholder="Volume in liters"
+                    value={preparationVolume}
+                    onChange={setPreparationVolume}
+                    min={0}
+                    step={0.1}
+                    decimalScale={2}
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <NumberInput
+                    label="Concentration (mol/L)"
+                    placeholder="Concentration in mol/L"
+                    value={preparationConcentration}
+                    onChange={setPreparationConcentration}
+                    min={0}
+                    step={0.01}
+                    decimalScale={3}
+                  />
+                </Grid.Col>
+              </Grid>
 
               <Text fw={500} mb="xs">
                 Ingredients

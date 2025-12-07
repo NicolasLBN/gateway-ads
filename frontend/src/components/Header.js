@@ -13,7 +13,7 @@ function Header() {
     <Group justify="space-between" h="100%" px="md">
       <Group>
         <Title order={3}>
-          🏭 Industrial App
+          🏭 recipe-manager
         </Title>
         <Badge
           size="lg"
@@ -30,6 +30,15 @@ function Header() {
           variant={location.pathname === '/' ? 'filled' : 'subtle'}
           leftSection={<IconHome size={16} />}
           onClick={() => navigate('/')}
+          styles={{
+            root: {
+              color: '#404040',
+              '&[data-variant="filled"]': {
+                backgroundColor: '#404040',
+                color: 'white',
+              },
+            },
+          }}
         >
           Home
         </Button>
@@ -37,6 +46,15 @@ function Header() {
           variant={location.pathname === '/new-recipe' ? 'filled' : 'subtle'}
           leftSection={<IconFileText size={16} />}
           onClick={() => navigate('/new-recipe')}
+          styles={{
+            root: {
+              color: '#404040',
+              '&[data-variant="filled"]': {
+                backgroundColor: '#404040',
+                color: 'white',
+              },
+            },
+          }}
         >
           New Recipe
         </Button>
@@ -44,6 +62,15 @@ function Header() {
           variant={location.pathname === '/history' ? 'filled' : 'subtle'}
           leftSection={<IconHistory size={16} />}
           onClick={() => navigate('/history')}
+          styles={{
+            root: {
+              color: '#404040',
+              '&[data-variant="filled"]': {
+                backgroundColor: '#404040',
+                color: 'white',
+              },
+            },
+          }}
         >
           History
         </Button>
@@ -51,6 +78,15 @@ function Header() {
           variant={location.pathname === '/machine-settings' ? 'filled' : 'subtle'}
           leftSection={<IconSettings size={16} />}
           onClick={() => navigate('/machine-settings')}
+          styles={{
+            root: {
+              color: '#404040',
+              '&[data-variant="filled"]': {
+                backgroundColor: '#404040',
+                color: 'white',
+              },
+            },
+          }}
         >
           Machine Settings
         </Button>

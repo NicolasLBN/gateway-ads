@@ -65,14 +65,15 @@ function MachineSelector() {
   };
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      <Card.Section withBorder inheritPadding py="xs">
+    <Card shadow="md" padding="xl" radius="md" withBorder>
+      <Card.Section withBorder inheritPadding py="md">
         <Group justify="space-between">
-          <Text fw={500}>Machine Selection</Text>
+          <Text fw={600} size="lg">Machine Selection</Text>
           <Badge
+            size="lg"
             color={isConnected ? 'green' : 'red'}
             leftSection={
-              isConnected ? <IconCircleCheck size={12} /> : <IconCircleX size={12} />
+              isConnected ? <IconCircleCheck size={14} /> : <IconCircleX size={14} />
             }
           >
             {isConnected ? 'Connected' : 'Disconnected'}
@@ -90,32 +91,51 @@ function MachineSelector() {
           setSelectedMachine(machine);
         }}
         disabled={loading}
-        mt="md"
+        mt="lg"
+        size="lg"
+        radius="md"
+        styles={{
+          input: {
+            padding: '12px 16px',
+            fontSize: '16px',
+          },
+          dropdown: {
+            padding: '8px',
+          },
+          option: {
+            padding: '12px 16px',
+            fontSize: '16px',
+            borderRadius: '8px',
+            marginBottom: '4px',
+          },
+        }}
       />
 
       {selectedMachine && (
-        <div style={{ marginTop: '1rem' }}>
-          <Text size="sm" c="dimmed">
-            Location: {selectedMachine.location}
+        <Card withBorder mt="lg" padding="md" radius="md" bg="#f8f9fa">
+          <Text size="sm" fw={500} mb="xs">Machine Details:</Text>
+          <Text size="sm" c="dimmed" mb="xs">
+            📍 Location: {selectedMachine.location}
+          </Text>
+          <Text size="sm" c="dimmed" mb="xs">
+            🔌 AMS Net ID: {selectedMachine.amsNetId}
           </Text>
           <Text size="sm" c="dimmed">
-            AMS Net ID: {selectedMachine.amsNetId}
+            🔧 AMS Port: {selectedMachine.amsPort}
           </Text>
-          <Text size="sm" c="dimmed">
-            AMS Port: {selectedMachine.amsPort}
-          </Text>
-        </div>
+        </Card>
       )}
 
-      <Group mt="md">
+      <Group mt="xl">
         {!isConnected ? (
           <Button
             fullWidth
             onClick={handleConnect}
             loading={connecting}
             disabled={!selectedMachine}
+            size="lg"
           >
-            Connect
+            Connect to Machine
           </Button>
         ) : (
           <Button
@@ -123,8 +143,9 @@ function MachineSelector() {
             color="red"
             onClick={handleDisconnect}
             loading={connecting}
+            size="lg"
           >
-            Disconnect
+            Disconnect from Machine
           </Button>
         )}
       </Group>

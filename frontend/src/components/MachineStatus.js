@@ -4,7 +4,7 @@ import { IconTemperature, IconGauge, IconEngine } from '@tabler/icons-react';
 import { useStore } from '../hooks/useStore';
 
 function MachineStatus() {
-  const { machineData, isConnected } = useStore();
+  const { machineData } = useStore();
 
 
   return (
