@@ -11,6 +11,7 @@ function MachineSelector() {
 
   useEffect(() => {
     loadMachines();
+    // Only run on mount - loadMachines doesn't need to be a dependency as it's stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
