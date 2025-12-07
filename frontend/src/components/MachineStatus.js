@@ -6,15 +6,6 @@ import { useStore } from '../hooks/useStore';
 function MachineStatus() {
   const { machineData, isConnected } = useStore();
 
-  if (!isConnected) {
-    return (
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Text c="dimmed" ta="center">
-          Not connected to machine
-        </Text>
-      </Card>
-    );
-  }
 
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>

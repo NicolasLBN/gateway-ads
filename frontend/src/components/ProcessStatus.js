@@ -5,16 +5,6 @@ import { useStore } from '../hooks/useStore';
 function ProcessStatus() {
   const { processData, isConnected } = useStore();
 
-  if (!isConnected) {
-    return (
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Text c="dimmed" ta="center">
-          Not connected to machine
-        </Text>
-      </Card>
-    );
-  }
-
   const getStepColor = (step) => {
     if (step === 0) return 'gray';
     if (processData.processDone) return 'green';

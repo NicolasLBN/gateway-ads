@@ -17,15 +17,7 @@ const PROCESS_STEPS = [
 function ProcessTimeline() {
   const { processData, isConnected } = useStore();
 
-  if (!isConnected) {
-    return (
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Text c="dimmed" ta="center">
-          Not connected to machine
-        </Text>
-      </Card>
-    );
-  }
+
 
   const currentStep = processData.currentStep || 0;
 
