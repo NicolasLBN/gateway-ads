@@ -11,6 +11,7 @@ function MachineSelector() {
 
   useEffect(() => {
     loadMachines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadMachines = async () => {

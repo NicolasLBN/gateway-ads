@@ -168,6 +168,17 @@ function NewRecipePage() {
         </Button>
       </Group>
 
+      {!isConnected && (
+        <Alert 
+          icon={<IconAlertCircle size={16} />} 
+          color="red" 
+          mb="md"
+          title="Not Connected"
+        >
+          Not connected to machine
+        </Alert>
+      )}
+
       {error && (
         <Alert icon={<IconAlertCircle size={16} />} color="red" mb="md" onClose={() => setError(null)} withCloseButton>
           {error}

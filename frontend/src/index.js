@@ -9,7 +9,6 @@ root.render(
   <React.StrictMode>
     <MantineProvider
       theme={{
-        colorScheme: 'dark',
         primaryColor: 'blue',
         fontFamily: 'Arial, sans-serif',
       }}
