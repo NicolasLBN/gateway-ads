@@ -15,7 +15,7 @@ const PROCESS_STEPS = [
 ];
 
 function ProcessTimeline() {
-  const { processData, isConnected } = useStore();
+  const { processData } = useStore();
 
 
 
