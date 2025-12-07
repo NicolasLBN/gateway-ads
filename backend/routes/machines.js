@@ -6,7 +6,7 @@ const machines = [
   {
     id: 'machine-1',
     name: 'Mixing Unit A',
-    amsNetId: '127.0.0.1.1.1',
+    amsNetId: '199.4.42.250.1.1',
     amsPort: 851,
     location: 'Production Line 1',
   },
