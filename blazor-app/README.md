@@ -1,6 +1,6 @@
 # Blazor Gateway ADS - Industrial Application
 
-Complete industrial application for recipe management, PLC control via ADS, and real-time monitoring, built with **Blazor Server** and **.NET 10**.
+Complete industrial application for recipe management, PLC control via ADS, and real-time monitoring, built with **Blazor Server** and **.NET 8**.
 
 ## 🎯 Features
 
@@ -35,10 +35,10 @@ Complete industrial application for recipe management, PLC control via ADS, and 
 ## 🛠️ Technologies
 
 ### Blazor Application
-- **.NET 10** - Framework
+- **.NET 8** - Framework
 - **Blazor Server** - Interactive web UI
 - **Beckhoff.TwinCAT.Ads** (v6.1.203) - ADS communication with TwinCAT PLC
-- **QuestPDF** (v2025.12.3) - PDF report generation
+- **QuestPDF** (v2024.7.3) - PDF report generation
 - **C#** - Programming language
 
 ### PLC
@@ -47,7 +47,7 @@ Complete industrial application for recipe management, PLC control via ADS, and 
 
 ## 📋 Prerequisites
 
-- **.NET 10 SDK** or later
+- **.NET 8 SDK** or later
 - **TwinCAT 3 XAE** (for PLC simulation)
 - **Windows** (for TwinCAT 3 - ADS protocol is Windows-specific)
 
@@ -234,7 +234,7 @@ private readonly TimeSpan _pollingInterval = TimeSpan.FromMilliseconds(500); // 
 
 ### Application Won't Start
 
-1. Verify .NET 10 SDK is installed: `dotnet --version`
+1. Verify .NET 8 SDK is installed: `dotnet --version`
 2. Restore dependencies: `dotnet restore`
 3. Check for port conflicts (default is 5001)
 
