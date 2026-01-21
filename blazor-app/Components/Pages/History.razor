@@ -1,0 +1,214 @@
+@page "/history"
+@rendermode InteractiveServer
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject ReportService ReportService
+@inject NavigationManager Navigation
+
+<PageTitle>Recipe History</PageTitle>
+
+<div class="history-page">
+    <div class="page-header">
+        <h1 class="page-title">Recipe History</h1>
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+
+    @if (reports.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No recipe history yet.</p>
+            <p class="empty-subtitle">Create and complete a recipe to generate reports.</p>
+        </div>
+    }
+    else
+    {
+        <div class="reports-grid">
+            @foreach (var report in reports)
+            {
+                <div class="report-card">
+                    <h3>@report.RecipeName</h3>
+                    <div class="report-meta">
+                        <p><strong>Machine:</strong> @report.MachineName</p>
+                        <p><strong>Date:</strong> @report.Date.ToString("MMMM dd, yyyy HH:mm")</p>
+                    </div>
+
+                    <div class="ingredients-section">
+                        <p class="ingredients-label">Ingredients:</p>
+                        <div class="ingredient-badges">
+                            @foreach (var ingredient in report.Products.Take(3))
+                            {
+                                <span class="badge">@ingredient.Name</span>
+                            }
+                            @if (report.Products.Count > 3)
+                            {
+                                <span class="badge badge-more">+@(report.Products.Count - 3) more</span>
+                            }
+                        </div>
+                    </div>
+
+                    <button class="btn-download" @onclick="() => DownloadReport(report.Id)">
+                        📥 Download PDF
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Report> reports = new();
+
+    protected override void OnInitialized()
+    {
+        LoadReports();
+    }
+
+    private void LoadReports()
+    {
+        reports = ReportService.GetReports();
+    }
+
+    private void DownloadReport(string reportId)
+    {
+        // In a real implementation, this would trigger a download
+        // For now, we'll just navigate to the PDF
+        Navigation.NavigateTo($"/reports/report_{reportId}.pdf", true);
+    }
+}
+
+<style>
+    .history-page {
+        max-width: 1200px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+
+    .btn-back {
+        padding: 10px 20px;
+        background-color: #61db34;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .btn-back:hover {
+        background-color: #4fb828;
+    }
+
+    .empty-state {
+        background: white;
+        border-radius: 8px;
+        padding: 60px 40px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state p {
+        font-size: 18px;
+        color: #868e96;
+        margin: 10px 0;
+    }
+
+    .empty-subtitle {
+        font-size: 14px !important;
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+    }
+
+    .report-card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .report-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .report-card h3 {
+        margin: 0 0 15px 0;
+        font-size: 22px;
+        color: #212529;
+    }
+
+    .report-meta {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 15px;
+    }
+
+    .report-meta p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #495057;
+    }
+
+    .ingredients-section {
+        margin-bottom: 20px;
+    }
+
+    .ingredients-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 10px;
+    }
+
+    .ingredient-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        background-color: #e7f5ff;
+        color: #1971c2;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .badge-more {
+        background-color: #f1f3f5;
+        color: #868e96;
+    }
+
+    .btn-download {
+        width: 100%;
+        padding: 12px;
+        background-color: #228be6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .btn-download:hover {
+        background-color: #1c7ed6;
+    }
+</style>

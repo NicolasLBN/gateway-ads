@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "dgSpecHash": "Qpx8eQzqXtY=",
+  "success": true,
+  "projectFilePath": "/home/runner/work/gateway-ads/gateway-ads/blazor-app/BlazorApp.csproj",
+  "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/beckhoff.twincat.ads/6.1.203/beckhoff.twincat.ads.6.1.203.nupkg.sha512",
+    "/home/runner/.nuget/packages/beckhoff.twincat.ads.abstractions/6.1.203/beckhoff.twincat.ads.abstractions.6.1.203.nupkg.sha512",
+    "/home/runner/.nuget/packages/beckhoff.twincat.ads.server/6.1.203/beckhoff.twincat.ads.server.6.1.203.nupkg.sha512",
+    "/home/runner/.nuget/packages/blazor.extensions.canvas/1.1.1/blazor.extensions.canvas.1.1.1.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.aspnetcore.app.internal.assets/10.0.1/microsoft.aspnetcore.app.internal.assets.10.0.1.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.win32.systemevents/6.0.0/microsoft.win32.systemevents.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/questpdf/2025.12.3/questpdf.2025.12.3.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.componentmodel.composition/6.0.0/system.componentmodel.composition.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.configuration.configurationmanager/6.0.0/system.configuration.configurationmanager.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.drawing.common/6.0.0/system.drawing.common.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.reactive/6.0.0/system.reactive.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.security.cryptography.protecteddata/6.0.0/system.security.cryptography.protecteddata.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.security.permissions/6.0.0/system.security.permissions.6.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.windows.extensions/6.0.0/system.windows.extensions.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

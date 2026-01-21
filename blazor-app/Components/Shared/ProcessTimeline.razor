@@ -1,0 +1,260 @@
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject AppStateService AppState
+
+<div class="process-timeline-card">
+    <h3>Process Timeline</h3>
+    
+    @if (!AppState.IsConnected)
+    {
+        <div class="timeline-empty">
+            <p>Connect to a machine to view process status</p>
+        </div>
+    }
+    else if (AppState.LatestProcessStatus != null)
+    {
+        var process = AppState.LatestProcessStatus;
+        
+        <div class="process-info">
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: @((process.Progress * 100).ToString("F0"))%">
+                    @((process.Progress * 100).ToString("F0"))%
+                </div>
+            </div>
+            
+            <div class="process-details">
+                <div class="detail-row">
+                    <span class="label">Current Step:</span>
+                    <span class="value">@process.StepName (@process.CurrentStep)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Step Progress:</span>
+                    <span class="value">@((process.StepProgress * 100).ToString("F0"))%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Step Time:</span>
+                    <span class="value">@process.StepTime s</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Total Time:</span>
+                    <span class="value">@process.TotalTime s</span>
+                </div>
+            </div>
+
+            @if (process.ProcessDone)
+            {
+                <div class="process-done">
+                    ✓ Process completed successfully!
+                </div>
+            }
+
+            @if (process.ErrorCode != 0)
+            {
+                <div class="process-error">
+                    ⚠️ Error @process.ErrorCode: @process.ErrorText
+                </div>
+            }
+        </div>
+
+        <div class="timeline">
+            @{
+                var steps = new[] { "Idle", "Preparation", "Dosing A", "Dosing B", "Mixing", "Verification", "Finalizing", "Done" };
+                for (int i = 0; i < steps.Length; i++)
+                {
+                    var isActive = i == process.CurrentStep;
+                    var isComplete = i < process.CurrentStep;
+                    var cssClass = isActive ? "active" : (isComplete ? "complete" : "");
+                    
+                    <div class="timeline-step @cssClass">
+                        <div class="timeline-marker">
+                            @if (isComplete)
+                            {
+                                <span>✓</span>
+                            }
+                            else
+                            {
+                                <span>@i</span>
+                            }
+                        </div>
+                        <div class="timeline-label">@steps[i]</div>
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <div class="timeline-loading">
+            <p>Loading process status...</p>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AppState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AppState.StateChanged -= OnStateChanged;
+    }
+}
+
+<style>
+    .process-timeline-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .process-timeline-card h3 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 30px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #228be6, #339af0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        transition: width 0.3s ease;
+    }
+
+    .process-details {
+        margin-bottom: 20px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .detail-row .label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .detail-row .value {
+        color: #212529;
+    }
+
+    .process-done {
+        padding: 12px;
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .process-error {
+        padding: 12px;
+        background-color: #ffe0e0;
+        color: #c92a2a;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+
+    .timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-top: 30px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #e9ecef;
+        z-index: 0;
+    }
+
+    .timeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+
+    .timeline-marker {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #868e96;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-bottom: 8px;
+        border: 3px solid white;
+    }
+
+    .timeline-step.active .timeline-marker {
+        background-color: #228be6;
+        color: white;
+        animation: pulse 1.5s infinite;
+    }
+
+    .timeline-step.complete .timeline-marker {
+        background-color: #51cf66;
+        color: white;
+    }
+
+    .timeline-label {
+        font-size: 11px;
+        text-align: center;
+        color: #868e96;
+        max-width: 80px;
+    }
+
+    .timeline-step.active .timeline-label {
+        color: #228be6;
+        font-weight: 600;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(34, 139, 230, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(34, 139, 230, 0);
+        }
+    }
+
+    .timeline-empty,
+    .timeline-loading {
+        text-align: center;
+        padding: 40px;
+        color: #868e96;
+    }
+</style>
