@@ -1,5 +1,3 @@
-using BlazorApp.Services;
-
 namespace BlazorApp.Services;
 
 public class PlcPollingService : BackgroundService

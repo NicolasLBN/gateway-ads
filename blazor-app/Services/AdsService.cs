@@ -6,6 +6,9 @@ namespace BlazorApp.Services;
 
 public class AdsService : IDisposable
 {
+    private const int ADS_STRING_BUFFER_SIZE = 255;
+    private const int ADS_STRING_MAX_LENGTH = 254;
+    
     private AdsClient? _adsClient;
     private readonly ILogger<AdsService> _logger;
     private bool _isConnected;
@@ -218,7 +221,7 @@ public class AdsService : IDisposable
             {
                 if (typeof(T) == typeof(string))
                 {
-                    var bytes = new byte[255];
+                    var bytes = new byte[ADS_STRING_BUFFER_SIZE];
                     _adsClient.Read(handle, bytes);
                     var str = Encoding.ASCII.GetString(bytes).TrimEnd('\0');
                     return (T)(object)str;
@@ -248,9 +251,9 @@ public class AdsService : IDisposable
                 if (typeof(T) == typeof(string))
                 {
                     var str = value?.ToString() ?? string.Empty;
-                    var bytes = new byte[255];
+                    var bytes = new byte[ADS_STRING_BUFFER_SIZE];
                     var strBytes = Encoding.ASCII.GetBytes(str);
-                    Array.Copy(strBytes, bytes, Math.Min(strBytes.Length, 254));
+                    Array.Copy(strBytes, bytes, Math.Min(strBytes.Length, ADS_STRING_MAX_LENGTH));
                     _adsClient.Write(handle, bytes);
                 }
                 else if (value != null)
