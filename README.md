@@ -2,6 +2,22 @@
 
 Complete industrial application for recipe management, PLC control via ADS, and real-time monitoring.
 
+## ✨ New: Blazor .NET Version Available!
+
+This repository now includes a **Blazor Server** implementation alongside the original React/Node.js version. The Blazor version is a complete rewrite in C# with .NET 10, offering:
+
+- ✅ Single integrated application (no separate frontend/backend)
+- ✅ Native ADS communication using `Beckhoff.TwinCAT.Ads` library
+- ✅ Modern industrial UI with real-time updates
+- ✅ PDF generation using QuestPDF
+- ✅ All original features migrated
+
+**Choose your version:**
+- **Blazor/.NET** (recommended) - See [`/blazor-app/README.md`](./blazor-app/README.md)
+- **React/Node.js** (original) - See instructions below
+
+---
+
 ## 🎯 Features
 
 - **Recipe Management**: Create and manage recipes with multiple ingredients
@@ -10,32 +26,51 @@ Complete industrial application for recipe management, PLC control via ADS, and 
 - **Process Control**: Launch and monitor automated processes
 - **PDF Reports**: Generate comprehensive PDF reports of completed recipes
 - **Multi-Machine Support**: Select and connect to different machines
-- **WebSocket Communication**: Real-time data updates via WebSocket
 
 ## 🏗️ Architecture
 
+### Blazor Version (New)
 ```
-/project
-  /frontend          - React.js application
-    /src
-      /components    - Reusable UI components
-      /pages         - Page components (Home, NewRecipe, History)
-      /hooks         - Custom hooks (Zustand store, WebSocket)
-      /services      - API and WebSocket services
-  /backend           - Node.js/Express server
-    /routes          - API routes
-    /ads             - ADS client for PLC communication
-    /pdf             - PDF generation
-    /ws              - WebSocket server
-  /plc-simulator     - TwinCAT 3 PLC program
-    /GVLs            - Global Variable Lists
-    /POUs            - Program Organization Units
-    /Tasks           - Task configuration
+/blazor-app        - Blazor Server application (.NET 10)
+  /Components
+    /Layout       - Application layout and navigation
+    /Pages        - Main pages (Home, NewRecipe, History, MachineSettings)
+    /Shared       - Reusable components
+  /Services       - Business logic and PLC communication (ADS)
+  /Models         - Data models
+  /wwwroot        - Static files and generated reports
+/plc-simulator    - TwinCAT 3 PLC program
+```
+
+### React/Node.js Version (Original)
+```
+/frontend          - React.js application
+  /src
+    /components    - Reusable UI components
+    /pages         - Page components (Home, NewRecipe, History)
+    /hooks         - Custom hooks (Zustand store, WebSocket)
+    /services      - API and WebSocket services
+/backend           - Node.js/Express server
+  /routes          - API routes
+  /ads             - ADS client for PLC communication
+  /pdf             - PDF generation
+  /ws              - WebSocket server
+/plc-simulator     - TwinCAT 3 PLC program
+  /GVLs            - Global Variable Lists
+  /POUs            - Program Organization Units
+  /Tasks           - Task configuration
 ```
 
 ## 🛠️ Technologies
 
-### Frontend
+### Blazor Version
+- **.NET 10** - Framework
+- **Blazor Server** - Interactive web UI
+- **Beckhoff.TwinCAT.Ads** - ADS communication
+- **QuestPDF** - PDF generation
+- **C#** - Programming language
+
+### React/Node.js Version (Original)
 - **React.js** - UI framework
 - **Mantine** - UI component library (industrial dark theme)
 - **Zustand** - State management

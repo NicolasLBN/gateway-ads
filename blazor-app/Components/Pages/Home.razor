@@ -1,0 +1,85 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="dashboard">
+    <h1 class="page-title">Dashboard</h1>
+
+    <div class="dashboard-grid">
+        <a href="/new-recipe" class="dashboard-card">
+            <div class="card-icon">➕</div>
+            <h2>Create New Recipe</h2>
+            <p>Start a new recipe and configure ingredients</p>
+        </a>
+
+        <a href="/history" class="dashboard-card">
+            <div class="card-icon">📋</div>
+            <h2>View Recipe History</h2>
+            <p>Access past recipes and download reports</p>
+        </a>
+
+        <a href="/machine-settings" class="dashboard-card">
+            <div class="card-icon">⚙️</div>
+            <h2>Machine Settings</h2>
+            <p>Configure PLC connection and machine parameters</p>
+        </a>
+    </div>
+</div>
+
+<style>
+    .dashboard {
+        max-width: 1200px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+
+    .dashboard-card h2 {
+        font-size: 22px;
+        font-weight: 600;
+        color: #212529;
+        margin: 0 0 10px 0;
+    }
+
+    .dashboard-card p {
+        font-size: 14px;
+        color: #868e96;
+        margin: 0;
+    }
+</style>

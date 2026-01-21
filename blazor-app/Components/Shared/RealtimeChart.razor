@@ -1,0 +1,197 @@
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject AppStateService AppState
+
+<div class="realtime-chart-card">
+    <h3>Real-time Machine Data</h3>
+    
+    @if (!AppState.IsConnected || AppState.MachineHistory.Count == 0)
+    {
+        <div class="chart-empty">
+            <p>No data available. Connect to a machine and start a process to see real-time charts.</p>
+        </div>
+    }
+    else
+    {
+        <div class="chart-container">
+            <div class="chart">
+                <div class="chart-title">Temperature (°C)</div>
+                <svg width="100%" height="150" viewBox="0 0 600 150">
+                    <!-- Grid lines -->
+                    @for (int i = 0; i <= 4; i++)
+                    {
+                        var y = 30 + i * 30;
+                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
+                    }
+                    
+                    <!-- Data line -->
+                    @if (tempPoints.Any())
+                    {
+                        <polyline points="@tempPoints" fill="none" stroke="#fa5252" stroke-width="2"/>
+                    }
+                    
+                    <!-- Axes -->
+                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
+                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <div class="chart">
+                <div class="chart-title">Pressure (bar)</div>
+                <svg width="100%" height="150" viewBox="0 0 600 150">
+                    <!-- Grid lines -->
+                    @for (int i = 0; i <= 4; i++)
+                    {
+                        var y = 30 + i * 30;
+                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
+                    }
+                    
+                    <!-- Data line -->
+                    @if (pressurePoints.Any())
+                    {
+                        <polyline points="@pressurePoints" fill="none" stroke="#228be6" stroke-width="2"/>
+                    }
+                    
+                    <!-- Axes -->
+                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
+                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <div class="chart">
+                <div class="chart-title">Speed (RPM)</div>
+                <svg width="100%" height="150" viewBox="0 0 600 150">
+                    <!-- Grid lines -->
+                    @for (int i = 0; i <= 4; i++)
+                    {
+                        var y = 30 + i * 30;
+                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
+                    }
+                    
+                    <!-- Data line -->
+                    @if (speedPoints.Any())
+                    {
+                        <polyline points="@speedPoints" fill="none" stroke="#51cf66" stroke-width="2"/>
+                    }
+                    
+                    <!-- Axes -->
+                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
+                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
+                </svg>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string tempPoints = "";
+    private string pressurePoints = "";
+    private string speedPoints = "";
+
+    protected override void OnInitialized()
+    {
+        AppState.StateChanged += OnStateChanged;
+        UpdateCharts();
+    }
+
+    private void OnStateChanged()
+    {
+        UpdateCharts();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateCharts()
+    {
+        var history = AppState.MachineHistory;
+        if (!history.Any()) return;
+
+        // Take last 50 points
+        var points = history.TakeLast(50).ToList();
+        var maxPoints = 50;
+        var width = 540.0;
+        var height = 120.0;
+        var xOffset = 40.0;
+        var yOffset = 30.0;
+
+        // Temperature chart
+        var tempMin = 0.0;
+        var tempMax = points.Any() ? Math.Max(50, points.Max(p => p.Status.MotorTemperature)) : 50;
+        tempPoints = string.Join(" ", points.Select((p, i) =>
+        {
+            var x = xOffset + (i * width / maxPoints);
+            var y = yOffset + height - (p.Status.MotorTemperature - tempMin) / (tempMax - tempMin) * height;
+            return $"{x:F1},{y:F1}";
+        }));
+
+        // Pressure chart
+        var pressureMin = 0.0;
+        var pressureMax = points.Any() ? Math.Max(5, points.Max(p => p.Status.OilPressure)) : 5;
+        pressurePoints = string.Join(" ", points.Select((p, i) =>
+        {
+            var x = xOffset + (i * width / maxPoints);
+            var y = yOffset + height - (p.Status.OilPressure - pressureMin) / (pressureMax - pressureMin) * height;
+            return $"{x:F1},{y:F1}";
+        }));
+
+        // Speed chart
+        var speedMin = 0.0;
+        var speedMax = points.Any() ? Math.Max(2000, points.Max(p => p.Status.MotorSpeed)) : 2000;
+        speedPoints = string.Join(" ", points.Select((p, i) =>
+        {
+            var x = xOffset + (i * width / maxPoints);
+            var y = yOffset + height - (p.Status.MotorSpeed - speedMin) / (speedMax - speedMin) * height;
+            return $"{x:F1},{y:F1}";
+        }));
+    }
+
+    public void Dispose()
+    {
+        AppState.StateChanged -= OnStateChanged;
+    }
+}
+
+<style>
+    .realtime-chart-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .realtime-chart-card h3 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .chart-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    @@media (min-width: 768px) {
+        .chart-container {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .chart {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 15px;
+    }
+
+    .chart-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .chart-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: #868e96;
+    }
+</style>

@@ -1,0 +1,131 @@
+@page "/machine-settings"
+@rendermode InteractiveServer
+@using BlazorApp.Components.Shared
+@using BlazorApp.Services
+@inject AppStateService AppState
+
+<PageTitle>Machine Settings</PageTitle>
+
+<div class="machine-settings-page">
+    <div class="page-header">
+        <h1 class="page-title">Machine Settings</h1>
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+
+    @if (!AppState.IsConnected)
+    {
+        <div class="alert alert-warning">
+            <strong>⚠️ Not Connected</strong>
+            <p>Not connected to machine. Select a machine below and click Connect.</p>
+        </div>
+    }
+
+    <div class="connection-status">
+        @if (AppState.IsConnected)
+        {
+            <span class="status-badge connected">● Connected: @(AppState.SelectedMachine?.Name ?? "Unknown")</span>
+        }
+        else
+        {
+            <span class="status-badge disconnected">● Disconnected</span>
+        }
+    </div>
+
+    <MachineSelector />
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AppState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AppState.StateChanged -= OnStateChanged;
+    }
+}
+
+<style>
+    .machine-settings-page {
+        max-width: 800px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+
+    .btn-back {
+        padding: 10px 20px;
+        background-color: #61db34;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+    .btn-back:hover {
+        background-color: #4fb828;
+    }
+
+    .connection-status {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .status-badge.connected {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+    }
+
+    .status-badge.disconnected {
+        background-color: #ffe0e0;
+        color: #c92a2a;
+    }
+
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+    }
+
+    .alert strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #856404;
+    }
+
+    .alert p {
+        margin: 0;
+        color: #856404;
+    }
+</style>
