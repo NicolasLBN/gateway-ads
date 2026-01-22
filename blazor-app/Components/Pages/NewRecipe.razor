@@ -6,7 +6,7 @@
 @inject AdsService AdsService
 @inject AppStateService AppState
 @inject ReportService ReportService
-@inject PdfService PdfService
+@inject HtmlReportService HtmlReportService
 @inject NavigationManager Navigation
 
 <PageTitle>New Recipe</PageTitle>
@@ -116,7 +116,7 @@
                 @if (AppState.LatestProcessStatus?.ProcessDone == true)
                 {
                     <button class="btn btn-info" @onclick="GenerateReport">
-                        📄 Generate PDF Report
+                        📄 Generate HTML Report
                     </button>
                 }
             </div>
@@ -275,7 +275,7 @@
             };
 
             ReportService.AddReport(report);
-            var fileName = PdfService.GenerateReport(report);
+            var fileName = HtmlReportService.GenerateReport(report);
             
             success = "Report generated successfully!";
             
