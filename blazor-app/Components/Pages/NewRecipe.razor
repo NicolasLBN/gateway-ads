@@ -6,7 +6,7 @@
 @inject AdsService AdsService
 @inject AppStateService AppState
 @inject ReportService ReportService
-@inject PdfService PdfService
+@inject HtmlReportService HtmlReportService
 @inject NavigationManager Navigation
 
 <PageTitle>New Recipe</PageTitle>
@@ -116,7 +116,7 @@
                 @if (AppState.LatestProcessStatus?.ProcessDone == true)
                 {
                     <button class="btn btn-info" @onclick="GenerateReport">
-                        📄 Generate PDF Report
+                        📄 Generate HTML Report
                     </button>
                 }
             </div>
@@ -275,7 +275,7 @@
             };
 
             ReportService.AddReport(report);
-            var fileName = PdfService.GenerateReport(report);
+            var fileName = HtmlReportService.GenerateReport(report);
             
             success = "Report generated successfully!";
             
@@ -314,13 +314,17 @@
     }
 
     .btn-back {
-        padding: 10px 20px;
+        padding: 12px 24px;
         background-color: #61db34;
         color: white;
         text-decoration: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-weight: 500;
+        font-size: 16px;
         transition: background-color 0.2s;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
     }
 
     .btn-back:hover {
@@ -342,41 +346,44 @@
 
     .card {
         background: white;
-        border-radius: 8px;
-        padding: 25px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .card h2 {
-        margin: 0 0 20px 0;
-        font-size: 24px;
+        margin: 0 0 24px 0;
+        font-size: 26px;
         color: #212529;
     }
 
     .card h3 {
-        margin: 20px 0 15px 0;
-        font-size: 18px;
+        margin: 24px 0 16px 0;
+        font-size: 20px;
         font-weight: 600;
         color: #495057;
     }
 
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
+        margin-bottom: 10px;
+        font-weight: 600;
+        font-size: 16px;
         color: #495057;
     }
 
     .form-control {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 14px;
+        padding: 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        min-height: 56px;
+        transition: border-color 0.2s;
     }
 
     .form-control:focus {
@@ -388,49 +395,70 @@
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        gap: 20px;
+    }
+
+    @@media (max-width: 640px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
     }
 
     .ingredient-card {
         background-color: #f8f9fa;
-        border-radius: 6px;
-        padding: 15px;
-        margin-bottom: 15px;
-        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #e9ecef;
     }
 
     .ingredient-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
         font-weight: 600;
+        font-size: 18px;
         color: #495057;
     }
 
     .ingredient-fields {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-        margin-top: 10px;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    @@media (max-width: 640px) {
+        .ingredient-fields {
+            grid-template-columns: 1fr;
+        }
     }
 
     .form-control-sm {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 13px;
+        padding: 14px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+        min-height: 52px;
+    }
+
+    .form-control-sm:focus {
+        outline: none;
+        border-color: #228be6;
     }
 
     .btn {
-        padding: 10px 20px;
+        padding: 16px 24px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 16px;
+        font-weight: 600;
         transition: all 0.2s;
+        min-height: 56px;
+        touch-action: manipulation;
     }
 
     .btn:disabled {
@@ -460,7 +488,7 @@
         background-color: #e9ecef;
         color: #495057;
         width: 100%;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
 
     .btn-secondary:hover {
@@ -471,7 +499,7 @@
         background-color: #339af0;
         color: white;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 24px;
     }
 
     .btn-info:hover {
@@ -482,9 +510,14 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        font-size: 18px;
-        padding: 0;
+        font-size: 24px;
+        padding: 8px;
         opacity: 0.7;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-icon-danger:hover {
@@ -493,8 +526,14 @@
 
     .action-buttons {
         display: flex;
-        gap: 15px;
-        margin-top: 20px;
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    @@media (max-width: 640px) {
+        .action-buttons {
+            flex-direction: column;
+        }
     }
 
     .action-buttons .btn {
@@ -512,27 +551,29 @@
     }
 
     .alert {
-        padding: 15px 20px;
+        padding: 18px 24px;
         border-radius: 8px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         position: relative;
+        font-size: 15px;
     }
 
     .alert-danger {
         background-color: #ffe0e0;
         color: #c92a2a;
-        border: 1px solid #ffc9c9;
+        border: 2px solid #ffc9c9;
     }
 
     .alert-success {
         background-color: #d3f9d8;
         color: #2b8a3e;
-        border: 1px solid #b2f2bb;
+        border: 2px solid #b2f2bb;
     }
 
     .alert strong {
         display: block;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: 16px;
     }
 
     .alert p {
@@ -541,13 +582,15 @@
 
     .alert-close {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 18px;
+        right: 18px;
         background: transparent;
         border: none;
-        font-size: 18px;
+        font-size: 22px;
         cursor: pointer;
         opacity: 0.7;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .alert-close:hover {

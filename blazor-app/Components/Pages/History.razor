@@ -33,7 +33,7 @@
                     </div>
 
                     <div class="ingredients-section">
-                        <p class="ingredients-label">Ingredients:</p>
+                        <p class="ingredients-label">Products & Flavors:</p>
                         <div class="ingredient-badges">
                             @foreach (var ingredient in report.Products.Take(3))
                             {
@@ -47,7 +47,7 @@
                     </div>
 
                     <button class="btn-download" @onclick="() => DownloadReport(report.Id)">
-                        📥 Download PDF
+                        📥 View Report
                     </button>
                 </div>
             }
@@ -70,9 +70,8 @@
 
     private void DownloadReport(string reportId)
     {
-        // In a real implementation, this would trigger a download
-        // For now, we'll just navigate to the PDF
-        Navigation.NavigateTo($"/reports/report_{reportId}.pdf", true);
+        // Navigate to the HTML report
+        Navigation.NavigateTo($"/reports/report_{reportId}.html", true);
     }
 }
 
