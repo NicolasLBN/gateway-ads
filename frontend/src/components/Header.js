@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Group, Title, Button, Badge } from '@mantine/core';
-import { IconHome, IconFileText, IconHistory, IconSettings, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import { IconHome, IconFileText, IconHistory, IconSettings, IconCircleCheck, IconCircleX, IconCode } from '@tabler/icons-react';
 import { useStore } from '../hooks/useStore';
 
 function Header() {
@@ -13,7 +13,7 @@ function Header() {
     <Group justify="space-between" h="100%" px="md">
       <Group>
         <Title order={3}>
-          🏭 recipe-manager
+          🏭 Recipe Manager
         </Title>
         <Badge
           size="lg"
@@ -89,6 +89,22 @@ function Header() {
           }}
         >
           Machine Settings
+        </Button>
+        <Button
+          variant={location.pathname === '/developer' ? 'filled' : 'subtle'}
+          leftSection={<IconCode size={16} />}
+          onClick={() => navigate('/developer')}
+          styles={{
+            root: {
+              color: '#404040',
+              '&[data-variant="filled"]': {
+                backgroundColor: '#404040',
+                color: 'white',
+              },
+            },
+          }}
+        >
+          Developer
         </Button>
       </Group>
     </Group>

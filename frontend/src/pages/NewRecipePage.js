@@ -204,21 +204,33 @@ function NewRecipePage() {
 
       <Grid>
         <Grid.Col span={{ base: 12, lg: 6 }}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
+          <Card shadow="sm" padding="xl" radius="md" withBorder>
             <form onSubmit={handleSubmit(onSubmit)}>
               <TextInput
                 label="Recipe Name"
                 placeholder="Enter recipe name"
                 required
                 {...register('recipeName')}
-                mb="md"
+                mb="lg"
+                size="lg"
+                styles={{
+                  input: {
+                    fontSize: '18px',
+                    padding: '14px',
+                  },
+                  label: {
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                  },
+                }}
               />
 
-              <Text fw={500} mb="xs">
+              <Text fw={600} mb="md" size="lg">
                 Preparation
               </Text>
               
-              <Grid gutter="md" mb="md">
+              <Grid gutter="lg" mb="xl">
                 <Grid.Col span={6}>
                   <NumberInput
                     label="Volume (L)"
@@ -228,6 +240,18 @@ function NewRecipePage() {
                     min={0}
                     step={0.1}
                     decimalScale={2}
+                    size="lg"
+                    styles={{
+                      input: {
+                        fontSize: '18px',
+                        padding: '14px',
+                      },
+                      label: {
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        marginBottom: '8px',
+                      },
+                    }}
                   />
                 </Grid.Col>
                 <Grid.Col span={6}>
@@ -239,29 +263,41 @@ function NewRecipePage() {
                     min={0}
                     step={0.01}
                     decimalScale={3}
+                    size="lg"
+                    styles={{
+                      input: {
+                        fontSize: '18px',
+                        padding: '14px',
+                      },
+                      label: {
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        marginBottom: '8px',
+                      },
+                    }}
                   />
                 </Grid.Col>
               </Grid>
 
-              <Text fw={500} mb="xs">
+              <Text fw={600} mb="md" size="lg">
                 Ingredients
               </Text>
 
-              <Stack gap="md">
+              <Stack gap="lg">
                 {ingredients.map((ingredient, index) => (
-                  <Card key={index} withBorder padding="sm">
-                    <Group justify="space-between" mb="xs">
-                      <Text size="sm" fw={500}>
+                  <Card key={index} withBorder padding="lg" shadow="xs" style={{ backgroundColor: '#f8f9fa' }}>
+                    <Group justify="space-between" mb="md">
+                      <Text size="md" fw={600}>
                         Ingredient {index + 1}
                       </Text>
                       {ingredients.length > 1 && (
                         <Button
-                          size="xs"
+                          size="md"
                           color="red"
-                          variant="subtle"
+                          variant="light"
                           onClick={() => removeIngredient(index)}
                         >
-                          <IconTrash size={14} />
+                          <IconTrash size={18} />
                         </Button>
                       )}
                     </Group>
@@ -270,36 +306,78 @@ function NewRecipePage() {
                       placeholder="Ingredient name"
                       value={ingredient.name}
                       onChange={(e) => updateIngredient(index, 'name', e.target.value)}
-                      mb="xs"
-                      size="sm"
+                      mb="md"
+                      size="lg"
+                      styles={{
+                        input: {
+                          fontSize: '18px',
+                          padding: '14px',
+                        },
+                      }}
                     />
 
-                    <Grid gutter="xs">
+                    <Grid gutter="md">
                       <Grid.Col span={4}>
                         <NumberInput
+                          label="Quantity (g)"
                           placeholder="Quantity (g)"
                           value={ingredient.quantity}
                           onChange={(val) => updateIngredient(index, 'quantity', val)}
                           min={0}
-                          size="sm"
+                          size="lg"
+                          styles={{
+                            input: {
+                              fontSize: '18px',
+                              padding: '14px',
+                            },
+                            label: {
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              marginBottom: '6px',
+                            },
+                          }}
                         />
                       </Grid.Col>
                       <Grid.Col span={4}>
                         <NumberInput
+                          label="Volume (ml)"
                           placeholder="Volume (ml)"
                           value={ingredient.volume}
                           onChange={(val) => updateIngredient(index, 'volume', val)}
                           min={0}
-                          size="sm"
+                          size="lg"
+                          styles={{
+                            input: {
+                              fontSize: '18px',
+                              padding: '14px',
+                            },
+                            label: {
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              marginBottom: '6px',
+                            },
+                          }}
                         />
                       </Grid.Col>
                       <Grid.Col span={4}>
                         <NumberInput
+                          label="M.Mass (g/L)"
                           placeholder="M.Mass (g/L)"
                           value={ingredient.molarMass}
                           onChange={(val) => updateIngredient(index, 'molarMass', val)}
                           min={0}
-                          size="sm"
+                          size="lg"
+                          styles={{
+                            input: {
+                              fontSize: '18px',
+                              padding: '14px',
+                            },
+                            label: {
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              marginBottom: '6px',
+                            },
+                          }}
                         />
                       </Grid.Col>
                     </Grid>
@@ -308,10 +386,11 @@ function NewRecipePage() {
               </Stack>
 
               <Button
-                leftSection={<IconPlus size={16} />}
+                leftSection={<IconPlus size={20} />}
                 variant="light"
                 fullWidth
-                mt="md"
+                mt="lg"
+                size="lg"
                 onClick={addIngredient}
               >
                 Add Ingredient
@@ -319,23 +398,52 @@ function NewRecipePage() {
 
               <Space h="xl" />
 
-              <Group>
-                <Button type="submit" loading={isSubmitting} disabled={!isConnected}>
+              <Group grow>
+                <Button 
+                  type="submit" 
+                  loading={isSubmitting} 
+                  disabled={!isConnected}
+                  size="lg"
+                  styles={{
+                    root: {
+                      fontSize: '16px',
+                      padding: '14px 24px',
+                    },
+                  }}
+                >
                   Send Recipe to PLC
                 </Button>
                 <Button
-                  leftSection={<IconPlayerPlay size={16} />}
+                  leftSection={<IconPlayerPlay size={20} />}
                   color="green"
                   onClick={handleRunProcess}
                   loading={isRunning}
                   disabled={!isConnected}
+                  size="lg"
+                  styles={{
+                    root: {
+                      fontSize: '16px',
+                      padding: '14px 24px',
+                    },
+                  }}
                 >
                   Run Process
                 </Button>
               </Group>
 
               {processData?.processDone && (
-                <Button fullWidth mt="md" onClick={handleGenerateReport}>
+                <Button 
+                  fullWidth 
+                  mt="lg" 
+                  onClick={handleGenerateReport}
+                  size="lg"
+                  styles={{
+                    root: {
+                      fontSize: '16px',
+                      padding: '14px 24px',
+                    },
+                  }}
+                >
                   Generate PDF Report
                 </Button>
               )}

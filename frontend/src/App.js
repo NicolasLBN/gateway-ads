@@ -5,18 +5,22 @@ import HomePage from './pages/HomePage';
 import NewRecipePage from './pages/NewRecipePage';
 import HistoryPage from './pages/HistoryPage';
 import MachineSettingsPage from './pages/MachineSettingsPage';
+import DeveloperPage from './pages/DeveloperPage';
 import Header from './components/Header';
+import Footer from './components/Footer';
 
 function App() {
   return (
     <Router>
       <AppShell
         header={{ height: 60 }}
+        footer={{ height: 60 }}
         padding="md"
         styles={(theme) => ({
           main: {
             backgroundColor: '#f5f5f5',
             minHeight: '100vh',
+            paddingBottom: '80px',
           },
         })}
       >
@@ -29,9 +33,12 @@ function App() {
             <Route path="/new-recipe" element={<NewRecipePage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/machine-settings" element={<MachineSettingsPage />} />
+            <Route path="/developer" element={<DeveloperPage />} />
           </Routes>
         </AppShell.Main>
+        <Footer />
       </AppShell>
+      
     </Router>
   );
 }

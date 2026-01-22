@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Select, Card, Text, Badge, Group, Button } from '@mantine/core';
-import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import { Card, Text, Badge, Group, Button, SimpleGrid, Stack } from '@mantine/core';
+import { IconCircleCheck, IconCircleX, IconServer, IconMapPin, IconNetwork } from '@tabler/icons-react';
 import { api } from '../services/api';
 import { useStore } from '../hooks/useStore';
 
 function MachineSelector() {
   const { machines, setMachines, selectedMachine, setSelectedMachine, isConnected } = useStore();
-  const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
@@ -16,7 +15,6 @@ function MachineSelector() {
   }, []);
 
   const loadMachines = async () => {
-    setLoading(true);
     try {
       const result = await api.getMachines();
       if (result.success) {
@@ -27,8 +25,6 @@ function MachineSelector() {
       }
     } catch (error) {
       console.error('Error loading machines:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -66,14 +62,14 @@ function MachineSelector() {
 
   return (
     <Card shadow="md" padding="xl" radius="md" withBorder>
-      <Card.Section withBorder inheritPadding py="md">
+      <Card.Section withBorder inheritPadding py="lg">
         <Group justify="space-between">
-          <Text fw={600} size="lg">Machine Selection</Text>
+          <Text fw={600} size="xl">Machine Selection</Text>
           <Badge
-            size="lg"
+            size="xl"
             color={isConnected ? 'green' : 'red'}
             leftSection={
-              isConnected ? <IconCircleCheck size={14} /> : <IconCircleX size={14} />
+              isConnected ? <IconCircleCheck size={16} /> : <IconCircleX size={16} />
             }
           >
             {isConnected ? 'Connected' : 'Disconnected'}
@@ -81,74 +77,122 @@ function MachineSelector() {
         </Group>
       </Card.Section>
 
-      <Select
-        label="Select Machine"
-        placeholder="Choose a machine"
-        data={machines.map((m) => ({ value: m.id, label: m.name }))}
-        value={selectedMachine?.id}
-        onChange={(value) => {
-          const machine = machines.find((m) => m.id === value);
-          setSelectedMachine(machine);
-        }}
-        disabled={loading}
-        mt="lg"
-        size="lg"
-        radius="md"
-        styles={{
-          input: {
-            padding: '12px 16px',
-            fontSize: '16px',
-          },
-          dropdown: {
-            padding: '8px',
-          },
-          option: {
-            padding: '12px 16px',
-            fontSize: '16px',
-            borderRadius: '8px',
-            marginBottom: '4px',
-          },
-        }}
-      />
+      <Stack gap="xl" mt="xl">
+        <div>
+          <Text size="lg" fw={600} mb="md">
+            Select a Machine:
+          </Text>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+            {machines.map((machine) => (
+              <Card
+                key={machine.id}
+                shadow="sm"
+                padding="lg"
+                radius="md"
+                withBorder
+                style={{
+                  cursor: 'pointer',
+                  border: selectedMachine?.id === machine.id ? '3px solid #228be6' : '2px solid #e9ecef',
+                  backgroundColor: selectedMachine?.id === machine.id ? '#e7f5ff' : '#ffffff',
+                  transition: 'all 0.2s ease',
+                }}
+                onClick={() => setSelectedMachine(machine)}
+              >
+                <Stack gap="md">
+                  <Group justify="space-between">
+                    <Group gap="xs">
+                      <IconServer size={24} color={selectedMachine?.id === machine.id ? '#228be6' : '#495057'} />
+                      <Text fw={700} size="lg">
+                        {machine.name}
+                      </Text>
+                    </Group>
+                    {selectedMachine?.id === machine.id && (
+                      <IconCircleCheck size={24} color="#228be6" />
+                    )}
+                  </Group>
+                  
+                  <Stack gap="xs">
+                    <Group gap="xs">
+                      <IconMapPin size={18} />
+                      <Text size="sm" c="dimmed">
+                        {machine.location}
+                      </Text>
+                    </Group>
+                    <Group gap="xs">
+                      <IconNetwork size={18} />
+                      <Text size="sm" c="dimmed">
+                        {machine.amsNetId}:{machine.amsPort}
+                      </Text>
+                    </Group>
+                  </Stack>
+                </Stack>
+              </Card>
+            ))}
+          </SimpleGrid>
+        </div>
 
-      {selectedMachine && (
-        <Card withBorder mt="lg" padding="md" radius="md" bg="#f8f9fa">
-          <Text size="sm" fw={500} mb="xs">Machine Details:</Text>
-          <Text size="sm" c="dimmed" mb="xs">
-            📍 Location: {selectedMachine.location}
-          </Text>
-          <Text size="sm" c="dimmed" mb="xs">
-            🔌 AMS Net ID: {selectedMachine.amsNetId}
-          </Text>
-          <Text size="sm" c="dimmed">
-            🔧 AMS Port: {selectedMachine.amsPort}
-          </Text>
-        </Card>
-      )}
-
-      <Group mt="xl">
-        {!isConnected ? (
-          <Button
-            fullWidth
-            onClick={handleConnect}
-            loading={connecting}
-            disabled={!selectedMachine}
-            size="lg"
-          >
-            Connect to Machine
-          </Button>
-        ) : (
-          <Button
-            fullWidth
-            color="red"
-            onClick={handleDisconnect}
-            loading={connecting}
-            size="lg"
-          >
-            Disconnect from Machine
-          </Button>
+        {selectedMachine && (
+          <Card withBorder padding="lg" radius="md" bg="#f8f9fa">
+            <Text size="md" fw={600} mb="md">Selected Machine Details:</Text>
+            <Stack gap="sm">
+              <Group gap="xs">
+                <IconServer size={20} />
+                <Text size="md" fw={500}>Name:</Text>
+                <Text size="md">{selectedMachine.name}</Text>
+              </Group>
+              <Group gap="xs">
+                <IconMapPin size={20} />
+                <Text size="md" fw={500}>Location:</Text>
+                <Text size="md">{selectedMachine.location}</Text>
+              </Group>
+              <Group gap="xs">
+                <IconNetwork size={20} />
+                <Text size="md" fw={500}>AMS Net ID:</Text>
+                <Text size="md">{selectedMachine.amsNetId}</Text>
+              </Group>
+              <Group gap="xs">
+                <IconNetwork size={20} />
+                <Text size="md" fw={500}>AMS Port:</Text>
+                <Text size="md">{selectedMachine.amsPort}</Text>
+              </Group>
+            </Stack>
+          </Card>
         )}
-      </Group>
+
+        <Group grow>
+          {!isConnected ? (
+            <Button
+              onClick={handleConnect}
+              loading={connecting}
+              disabled={!selectedMachine}
+              size="xl"
+              styles={{
+                root: {
+                  fontSize: '18px',
+                  padding: '16px 24px',
+                },
+              }}
+            >
+              Connect to Machine
+            </Button>
+          ) : (
+            <Button
+              color="red"
+              onClick={handleDisconnect}
+              loading={connecting}
+              size="xl"
+              styles={{
+                root: {
+                  fontSize: '18px',
+                  padding: '16px 24px',
+                },
+              }}
+            >
+              Disconnect from Machine
+            </Button>
+          )}
+        </Group>
+      </Stack>
     </Card>
   );
 }
