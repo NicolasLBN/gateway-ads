@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import NewRecipePage from './pages/NewRecipePage';
 import HistoryPage from './pages/HistoryPage';
 import MachineSettingsPage from './pages/MachineSettingsPage';
+import DeveloperPage from './pages/DeveloperPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -32,6 +33,7 @@ function App() {
             <Route path="/new-recipe" element={<NewRecipePage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/machine-settings" element={<MachineSettingsPage />} />
+            <Route path="/developer" element={<DeveloperPage />} />
           </Routes>
         </AppShell.Main>
         <Footer />
