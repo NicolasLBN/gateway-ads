@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Text, Badge, Group, Button, SimpleGrid, Stack, Radio } from '@mantine/core';
+import { Card, Text, Badge, Group, Button, SimpleGrid, Stack } from '@mantine/core';
 import { IconCircleCheck, IconCircleX, IconServer, IconMapPin, IconNetwork } from '@tabler/icons-react';
 import { api } from '../services/api';
 import { useStore } from '../hooks/useStore';
 
 function MachineSelector() {
   const { machines, setMachines, selectedMachine, setSelectedMachine, isConnected } = useStore();
-  const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
@@ -16,7 +15,6 @@ function MachineSelector() {
   }, []);
 
   const loadMachines = async () => {
-    setLoading(true);
     try {
       const result = await api.getMachines();
       if (result.success) {
@@ -27,8 +25,6 @@ function MachineSelector() {
       }
     } catch (error) {
       console.error('Error loading machines:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
