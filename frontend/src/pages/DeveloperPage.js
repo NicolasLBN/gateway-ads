@@ -41,6 +41,16 @@ function DeveloperPage() {
       return;
     }
 
+    // Validate that IP octets are between 0-255
+    const parts = amsNetId.split('.');
+    for (let i = 0; i < 4; i++) {
+      const octet = parseInt(parts[i], 10);
+      if (octet < 0 || octet > 255) {
+        setError('Invalid AMS Net ID: IP octets must be between 0 and 255');
+        return;
+      }
+    }
+
     const newMachine = {
       id: `machine-${Date.now()}`,
       name: machineName,
