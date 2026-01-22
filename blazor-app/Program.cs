@@ -12,7 +12,6 @@ builder.Services.AddSingleton<AdsService>();
 builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<MachineService>();
 builder.Services.AddSingleton<ReportService>();
-builder.Services.AddSingleton<PdfService>();
 builder.Services.AddSingleton<HtmlReportService>();
 
 // Add background service for PLC polling
