@@ -1,0 +1,408 @@
+@page "/developer"
+@rendermode InteractiveServer
+@using BlazorApp.Services
+@inject AppStateService AppState
+@inject NavigationManager Navigation
+
+<PageTitle>Developer Settings</PageTitle>
+
+<div class="developer-page">
+    <div class="page-header">
+        <h1 class="page-title">Developer Settings</h1>
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+
+    <div class="warning-banner">
+        <span class="warning-icon">⚠️</span>
+        <div>
+            <strong>Developer Mode</strong>
+            <p>This page is for advanced configuration. Please ensure you understand the settings before making changes.</p>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <h2>PLC Configuration</h2>
+        
+        <div class="form-group">
+            <label>AMS Net ID</label>
+            <input type="text" 
+                   class="form-control" 
+                   @bind="amsNetId" 
+                   placeholder="127.0.0.1.1.1" 
+                   disabled="@AppState.IsConnected" />
+            <small class="form-hint">Format: xxx.xxx.xxx.xxx.x.x (e.g., 127.0.0.1.1.1)</small>
+        </div>
+
+        <div class="form-group">
+            <label>AMS Port</label>
+            <input type="number" 
+                   class="form-control" 
+                   @bind="amsPort" 
+                   placeholder="851" 
+                   disabled="@AppState.IsConnected" />
+            <small class="form-hint">Default TwinCAT PLC port is 851</small>
+        </div>
+
+        @if (AppState.IsConnected)
+        {
+            <div class="alert alert-warning">
+                <strong>⚠️ Connection Active</strong>
+                <p>Please disconnect from the PLC before changing configuration settings.</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert @(isError ? "alert-danger" : "alert-success")">
+                @message
+            </div>
+        }
+
+        <div class="button-group">
+            <button class="btn btn-secondary" @onclick="LoadSettings">
+                Reload Settings
+            </button>
+            <button class="btn btn-primary" @onclick="SaveSettings" disabled="@AppState.IsConnected">
+                Save Configuration
+            </button>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>Current Configuration</h3>
+        <div class="config-display">
+            <div class="config-item">
+                <span class="config-label">AMS Net ID:</span>
+                <code>@currentAmsNetId</code>
+            </div>
+            <div class="config-item">
+                <span class="config-label">AMS Port:</span>
+                <code>@currentAmsPort</code>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Connection Status:</span>
+                @if (AppState.IsConnected)
+                {
+                    <span class="status-badge connected">Connected</span>
+                }
+                else
+                {
+                    <span class="status-badge disconnected">Disconnected</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string amsNetId = "127.0.0.1.1.1";
+    private int amsPort = 851;
+    private string currentAmsNetId = "127.0.0.1.1.1";
+    private int currentAmsPort = 851;
+    private string? message;
+    private bool isError;
+
+    protected override void OnInitialized()
+    {
+        LoadSettings();
+        AppState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadSettings()
+    {
+        // In a real implementation, load from configuration file or database
+        // For now, use default values
+        amsNetId = "127.0.0.1.1.1";
+        amsPort = 851;
+        currentAmsNetId = amsNetId;
+        currentAmsPort = amsPort;
+        message = "Settings loaded successfully";
+        isError = false;
+    }
+
+    private void SaveSettings()
+    {
+        if (string.IsNullOrWhiteSpace(amsNetId))
+        {
+            message = "AMS Net ID cannot be empty";
+            isError = true;
+            return;
+        }
+
+        if (amsPort < 1 || amsPort > 65535)
+        {
+            message = "AMS Port must be between 1 and 65535";
+            isError = true;
+            return;
+        }
+
+        // Validate AMS Net ID format (basic validation)
+        var parts = amsNetId.Split('.');
+        if (parts.Length != 6)
+        {
+            message = "Invalid AMS Net ID format. Expected format: xxx.xxx.xxx.xxx.x.x";
+            isError = true;
+            return;
+        }
+
+        // In a real implementation, save to configuration file or database
+        currentAmsNetId = amsNetId;
+        currentAmsPort = amsPort;
+        message = "Configuration saved successfully! Changes will take effect on next connection.";
+        isError = false;
+    }
+
+    public void Dispose()
+    {
+        AppState.StateChanged -= OnStateChanged;
+    }
+}
+
+<style>
+    .developer-page {
+        max-width: 900px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+
+    .btn-back {
+        padding: 12px 24px;
+        background-color: #61db34;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 16px;
+        transition: background-color 0.2s;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-back:hover {
+        background-color: #4fb828;
+    }
+
+    .warning-banner {
+        display: flex;
+        gap: 16px;
+        background-color: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+
+    .warning-icon {
+        font-size: 28px;
+    }
+
+    .warning-banner strong {
+        display: block;
+        color: #856404;
+        margin-bottom: 4px;
+        font-size: 16px;
+    }
+
+    .warning-banner p {
+        color: #856404;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .settings-card,
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+    }
+
+    .settings-card h2,
+    .info-card h3 {
+        margin: 0 0 24px 0;
+        font-size: 24px;
+        color: #212529;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        color: #495057;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        min-height: 56px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #228be6;
+        box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.1);
+    }
+
+    .form-control:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .form-hint {
+        display: block;
+        margin-top: 8px;
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 16px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        min-height: 56px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #228be6;
+        color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background-color: #1c7ed6;
+    }
+
+    .btn-secondary {
+        background-color: #e9ecef;
+        color: #495057;
+    }
+
+    .btn-secondary:hover {
+        background-color: #dee2e6;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .alert {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin: 16px 0;
+        font-size: 15px;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border: 2px solid #ffc107;
+        color: #856404;
+    }
+
+    .alert-danger {
+        background-color: #ffe0e0;
+        color: #c92a2a;
+        border: 2px solid #ffc9c9;
+    }
+
+    .alert-success {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+        border: 2px solid #b2f2bb;
+    }
+
+    .alert strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .alert p {
+        margin: 0;
+    }
+
+    .config-display {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .config-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .config-item:last-child {
+        border-bottom: none;
+    }
+
+    .config-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    code {
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .status-badge.connected {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+    }
+
+    .status-badge.disconnected {
+        background-color: #ffe0e0;
+        color: #c92a2a;
+    }
+</style>

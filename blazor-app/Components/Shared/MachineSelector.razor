@@ -5,29 +5,34 @@
 @inject AppStateService AppState
 
 <div class="machine-selector-card">
-    <h3>Machine Connection</h3>
+    <h3>Select Machine</h3>
     
-    <div class="form-group">
-        <label>Select Machine:</label>
-        <select class="form-control" @onchange="OnMachineSelected" disabled="@(isConnecting || AppState.IsConnected)">
-            <option value="">-- Select a machine --</option>
-            @foreach (var machine in machines)
-            {
-                <option value="@machine.Id" selected="@(AppState.SelectedMachine?.Id == machine.Id)">
-                    @machine.Name
-                </option>
-            }
-        </select>
+    <div class="machines-grid">
+        @foreach (var machine in machines)
+        {
+            <div class="machine-card @(selectedMachine?.Id == machine.Id ? "selected" : "")" 
+                 @onclick="() => SelectMachine(machine)">
+                <div class="machine-card-header">
+                    <h4>@machine.Name</h4>
+                    @if (AppState.IsConnected && AppState.SelectedMachine?.Id == machine.Id)
+                    {
+                        <span class="badge-connected">● Connected</span>
+                    }
+                </div>
+                <p class="machine-description">@machine.Description</p>
+                <div class="machine-details">
+                    <div class="detail-item">
+                        <span class="detail-label">AMS Net ID:</span>
+                        <span class="detail-value">@machine.AmsNetId</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Port:</span>
+                        <span class="detail-value">@machine.AmsPort</span>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
-
-    @if (selectedMachine != null)
-    {
-        <div class="machine-details">
-            <p><strong>Description:</strong> @selectedMachine.Description</p>
-            <p><strong>AMS Net ID:</strong> @selectedMachine.AmsNetId</p>
-            <p><strong>AMS Port:</strong> @selectedMachine.AmsPort</p>
-        </div>
-    }
 
     @if (error != null)
     {
@@ -46,7 +51,7 @@
                 }
                 else
                 {
-                    <span>Connect</span>
+                    <span>Connect to Selected Machine</span>
                 }
             </button>
         }
@@ -77,17 +82,12 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnMachineSelected(ChangeEventArgs e)
+    private void SelectMachine(Machine machine)
     {
-        var machineId = e.Value?.ToString();
-        if (!string.IsNullOrEmpty(machineId))
+        if (!AppState.IsConnected)
         {
-            selectedMachine = MachineService.GetMachine(machineId);
-            AppState.SetSelectedMachine(selectedMachine!);
-        }
-        else
-        {
-            selectedMachine = null;
+            selectedMachine = machine;
+            AppState.SetSelectedMachine(machine);
         }
     }
 
@@ -131,56 +131,113 @@
 <style>
     .machine-selector-card {
         background-color: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .machine-selector-card h3 {
-        margin-bottom: 20px;
-        color: #333;
+        margin-bottom: 24px;
+        color: #212529;
+        font-size: 24px;
+        font-weight: 600;
     }
 
-    .form-group {
-        margin-bottom: 15px;
+    .machines-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
     }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
+    .machine-card {
+        background-color: #f8f9fa;
+        border: 3px solid #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-height: 180px;
     }
 
-    .form-control {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+    .machine-card:hover {
+        border-color: #228be6;
+        box-shadow: 0 4px 12px rgba(34, 139, 230, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .machine-card.selected {
+        border-color: #228be6;
+        background-color: #e7f5ff;
+    }
+
+    .machine-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .machine-card h4 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .badge-connected {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .machine-description {
+        color: #495057;
+        margin-bottom: 16px;
         font-size: 14px;
+        line-height: 1.5;
     }
 
     .machine-details {
-        background-color: #f5f5f5;
-        padding: 15px;
-        border-radius: 4px;
-        margin: 15px 0;
+        background-color: white;
+        border-radius: 6px;
+        padding: 12px;
     }
 
-    .machine-details p {
-        margin: 5px 0;
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 6px 0;
+        font-size: 13px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .detail-value {
+        color: #212529;
+        font-family: 'Courier New', monospace;
     }
 
     .button-group {
-        margin-top: 15px;
+        margin-top: 24px;
     }
 
     .btn {
-        padding: 10px 20px;
+        padding: 16px 24px;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 16px;
+        font-weight: 600;
+        min-height: 56px;
+        width: 100%;
+        transition: all 0.2s;
     }
 
     .btn-primary {
@@ -207,14 +264,15 @@
     }
 
     .alert {
-        padding: 12px;
-        border-radius: 4px;
-        margin: 10px 0;
+        padding: 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+        font-size: 15px;
     }
 
     .alert-danger {
         background-color: #ffe0e0;
         color: #c92a2a;
-        border: 1px solid #ffc9c9;
+        border: 2px solid #ffc9c9;
     }
 </style>
