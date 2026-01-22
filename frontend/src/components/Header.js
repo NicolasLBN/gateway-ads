@@ -13,7 +13,7 @@ function Header() {
     <Group justify="space-between" h="100%" px="md">
       <Group>
         <Title order={3}>
-          🏭 recipe-manager
+          🏭 Recipe Manager
         </Title>
         <Badge
           size="lg"

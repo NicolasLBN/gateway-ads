@@ -16,70 +16,70 @@ import {
 import { IconArrowLeft, IconDownload, IconAlertCircle } from '@tabler/icons-react';
 import { api } from '../services/api';
 
-// Fake history data
+// Fake history data - Using product and flavor ingredients
 const fakeHistory = [
   {
     id: '1',
-    recipeName: 'Chocolate Chip Cookies',
+    recipeName: 'Vanilla Cream Mix',
     machineName: 'Mixing Unit A',
     date: new Date('2025-12-07T10:30:00'),
     products: [
-      { name: 'Flour' },
+      { name: 'Milk Powder' },
       { name: 'Sugar' },
-      { name: 'Butter' },
-      { name: 'Chocolate Chips' },
-      { name: 'Eggs' },
+      { name: 'Natural Vanilla Extract' },
+      { name: 'Cream Base' },
+      { name: 'Stabilizer' },
     ],
   },
   {
     id: '2',
-    recipeName: 'Vanilla Cupcakes',
+    recipeName: 'Chocolate Flavor Blend',
     machineName: 'Mixing Unit B',
     date: new Date('2025-12-06T14:20:00'),
     products: [
-      { name: 'Flour' },
-      { name: 'Sugar' },
-      { name: 'Vanilla Extract' },
-      { name: 'Milk' },
-      { name: 'Eggs' },
+      { name: 'Cocoa Powder' },
+      { name: 'Sweetener' },
+      { name: 'Chocolate Flavor' },
+      { name: 'Emulsifier' },
+      { name: 'Milk Base' },
     ],
   },
   {
     id: '3',
-    recipeName: 'Sourdough Bread',
+    recipeName: 'Strawberry Essence',
     machineName: 'Mixing Unit A',
     date: new Date('2025-12-05T08:15:00'),
     products: [
-      { name: 'Flour' },
-      { name: 'Water' },
-      { name: 'Sourdough Starter' },
-      { name: 'Salt' },
+      { name: 'Strawberry Concentrate' },
+      { name: 'Natural Color' },
+      { name: 'Flavor Enhancer' },
+      { name: 'Sugar Syrup' },
     ],
   },
   {
     id: '4',
-    recipeName: 'Lemon Tart',
+    recipeName: 'Lemon Citrus Mix',
     machineName: 'Mixing Unit C',
     date: new Date('2025-12-04T16:45:00'),
     products: [
-      { name: 'Flour' },
-      { name: 'Butter' },
-      { name: 'Lemon Juice' },
-      { name: 'Sugar' },
-      { name: 'Eggs' },
+      { name: 'Lemon Oil' },
+      { name: 'Citric Acid' },
+      { name: 'Natural Lemon Flavor' },
+      { name: 'Sweetener' },
+      { name: 'Stabilizer' },
     ],
   },
   {
     id: '5',
-    recipeName: 'Red Velvet Cake',
+    recipeName: 'Caramel Flavor Base',
     machineName: 'Mixing Unit B',
     date: new Date('2025-12-03T11:00:00'),
     products: [
-      { name: 'Flour' },
-      { name: 'Cocoa Powder' },
-      { name: 'Buttermilk' },
-      { name: 'Red Food Coloring' },
-      { name: 'Cream Cheese' },
+      { name: 'Caramel Color' },
+      { name: 'Butter Flavor' },
+      { name: 'Brown Sugar' },
+      { name: 'Vanilla Extract' },
+      { name: 'Cream Powder' },
     ],
   },
 ];
@@ -188,7 +188,7 @@ function HistoryPage() {
 
                 <div>
                   <Text size="sm" fw={500} mb="xs">
-                    Ingredients:
+                    Products & Flavors:
                   </Text>
                   <Group gap="xs">
                     {report.products?.slice(0, 3).map((p, i) => (

@@ -6,17 +6,20 @@ import NewRecipePage from './pages/NewRecipePage';
 import HistoryPage from './pages/HistoryPage';
 import MachineSettingsPage from './pages/MachineSettingsPage';
 import Header from './components/Header';
+import Footer from './components/Footer';
 
 function App() {
   return (
     <Router>
       <AppShell
         header={{ height: 60 }}
+        footer={{ height: 60 }}
         padding="md"
         styles={(theme) => ({
           main: {
             backgroundColor: '#f5f5f5',
             minHeight: '100vh',
+            paddingBottom: '80px',
           },
         })}
       >
@@ -31,7 +34,9 @@ function App() {
             <Route path="/machine-settings" element={<MachineSettingsPage />} />
           </Routes>
         </AppShell.Main>
+        <Footer />
       </AppShell>
+      
     </Router>
   );
 }
