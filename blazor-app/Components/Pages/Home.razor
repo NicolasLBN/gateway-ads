@@ -29,7 +29,8 @@
 
 <style>
     .dashboard {
-        max-width: 1200px;
+        max-width: 100%;
+        width: 100%;
     }
 
     .page-title {
@@ -39,10 +40,24 @@
         margin-bottom: 30px;
     }
 
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    }
+
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 30px;
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
     }
 
     .dashboard-card {
@@ -60,6 +75,12 @@
         text-align: center;
     }
 
+    @@media (max-width: 768px) {
+        .dashboard-card {
+            padding: 30px 20px;
+        }
+    }
+
     .dashboard-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
@@ -70,6 +91,13 @@
         margin-bottom: 20px;
     }
 
+    @@media (max-width: 768px) {
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    }
+
     .dashboard-card h2 {
         font-size: 22px;
         font-weight: 600;
@@ -77,9 +105,21 @@
         margin: 0 0 10px 0;
     }
 
+    @@media (max-width: 768px) {
+        .dashboard-card h2 {
+            font-size: 18px;
+        }
+    }
+
     .dashboard-card p {
         font-size: 14px;
         color: #868e96;
         margin: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-card p {
+            font-size: 13px;
+        }
     }
 </style>

@@ -1,5 +1,13 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 a, .btn-link {
