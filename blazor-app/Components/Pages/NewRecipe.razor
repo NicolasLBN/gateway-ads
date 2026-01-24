@@ -133,8 +133,6 @@
 
 @code {
     private string recipeName = "";
-    private double preparationVolume = 0;
-    private double preparationConcentration = 0;
     private List<Ingredient> ingredients = new() { new Ingredient() };
     private bool isSubmitting = false;
     private bool isRunning = false;
@@ -162,12 +160,9 @@
         if (favorite != null)
         {
             recipeName = favorite.Name;
-            preparationVolume = favorite.PreparationVolume;
-            preparationConcentration = favorite.PreparationConcentration;
             ingredients = favorite.Ingredients.Select(i => new Ingredient
             {
                 Name = i.Name,
-                Quantity = i.Quantity,
                 Volume = i.Volume,
                 MolarMass = i.MolarMass
             }).ToList();
@@ -244,8 +239,8 @@
             {
                 Name = recipeName,
                 Ingredients = ingredients.ToList(),
-                PreparationVolume = preparationVolume,
-                PreparationConcentration = preparationConcentration
+                PreparationVolume = 0,
+                PreparationConcentration = 0
             };
 
             var result = await AdsService.SendRecipeAsync(recipe);
