@@ -22,7 +22,9 @@ public class FavoritesService
     {
         using var db = new LiteDatabase(_dbPath);
         var favorites = db.GetCollection<FavoriteRecipe>("favorites");
-        return favorites.FindAll().OrderByDescending(f => f.UpdatedAt).ToList();
+        return favorites.Query()
+            .OrderByDescending(f => f.UpdatedAt)
+            .ToList();
     }
 
     public FavoriteRecipe? GetFavorite(int id)

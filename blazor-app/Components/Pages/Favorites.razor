@@ -149,12 +149,34 @@
     </div>
 }
 
+@if (showDeleteConfirm)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-content delete-confirm" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Confirm Delete</h2>
+                <button class="modal-close" @onclick="CancelDelete">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this favorite recipe?</p>
+                <p style="color: #868e96; font-size: 14px;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                <button class="btn btn-delete" @onclick="ConfirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<FavoriteRecipe> favorites = new();
     private bool showModal = false;
     private FavoriteRecipe? editingFavorite = null;
     private FavoriteRecipe modalRecipe = new() { Ingredients = new() { new Ingredient() } };
     private string? modalError;
+    private bool showDeleteConfirm = false;
+    private int? deleteConfirmId = null;
 
     protected override void OnInitialized()
     {
@@ -259,16 +281,24 @@
 
     private void DeleteFavorite(int id)
     {
-        if (confirm("Are you sure you want to delete this favorite?"))
-        {
-            FavoritesService.DeleteFavorite(id);
-        }
+        deleteConfirmId = id;
+        showDeleteConfirm = true;
     }
 
-    private bool confirm(string message)
+    private void ConfirmDelete()
     {
-        // Simple confirmation - in a real app, you'd use a proper modal
-        return true;
+        if (deleteConfirmId.HasValue)
+        {
+            FavoritesService.DeleteFavorite(deleteConfirmId.Value);
+            deleteConfirmId = null;
+        }
+        showDeleteConfirm = false;
+    }
+
+    private void CancelDelete()
+    {
+        deleteConfirmId = null;
+        showDeleteConfirm = false;
     }
 
     private void UseFavorite(int id)
@@ -507,6 +537,10 @@
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .delete-confirm {
+        max-width: 450px;
     }
 
     .modal-header {
