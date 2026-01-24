@@ -57,9 +57,6 @@
                         <button class="btn-action btn-use" @onclick="() => UseFavorite(favorite.Id)">
                             ▶️ Use Recipe
                         </button>
-                        <button class="btn-action btn-edit" @onclick="() => ShowEditModal(favorite)">
-                            ✏️ Edit
-                        </button>
                         <button class="btn-action btn-delete" @onclick="() => DeleteFavorite(favorite.Id)">
                             🗑️ Delete
                         </button>
@@ -75,7 +72,7 @@
     <div class="modal-overlay" @onclick="CloseModal">
         <div class="modal-content" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h2>@(editingFavorite == null ? "Add" : "Edit") Favorite Recipe</h2>
+                <h2>Add Favorite Recipe</h2>
                 <button class="modal-close" @onclick="CloseModal">✕</button>
             </div>
 
@@ -172,7 +169,6 @@
 @code {
     private List<FavoriteRecipe> favorites = new();
     private bool showModal = false;
-    private FavoriteRecipe? editingFavorite = null;
     private FavoriteRecipe modalRecipe = new() { Ingredients = new() { new Ingredient() } };
     private string? modalError;
     private bool showDeleteConfirm = false;
@@ -198,30 +194,7 @@
 
     private void ShowAddModal()
     {
-        editingFavorite = null;
         modalRecipe = new FavoriteRecipe { Ingredients = new() { new Ingredient() } };
-        modalError = null;
-        showModal = true;
-    }
-
-    private void ShowEditModal(FavoriteRecipe favorite)
-    {
-        editingFavorite = favorite;
-        // Deep copy the favorite
-        modalRecipe = new FavoriteRecipe
-        {
-            Id = favorite.Id,
-            Name = favorite.Name,
-            PreparationVolume = favorite.PreparationVolume,
-            PreparationConcentration = favorite.PreparationConcentration,
-            Ingredients = favorite.Ingredients.Select(i => new Ingredient
-            {
-                Name = i.Name,
-                Quantity = i.Quantity,
-                Volume = i.Volume,
-                MolarMass = i.MolarMass
-            }).ToList()
-        };
         modalError = null;
         showModal = true;
     }
@@ -229,7 +202,6 @@
     private void CloseModal()
     {
         showModal = false;
-        editingFavorite = null;
         modalError = null;
     }
 
@@ -259,15 +231,7 @@
             return;
         }
 
-        bool success;
-        if (editingFavorite == null)
-        {
-            success = FavoritesService.AddFavorite(modalRecipe);
-        }
-        else
-        {
-            success = FavoritesService.UpdateFavorite(modalRecipe);
-        }
+        bool success = FavoritesService.AddFavorite(modalRecipe);
 
         if (success)
         {
@@ -494,15 +458,6 @@
 
     .btn-use:hover {
         background-color: #40c057;
-    }
-
-    .btn-edit {
-        background-color: #228be6;
-        color: white;
-    }
-
-    .btn-edit:hover {
-        background-color: #1c7ed6;
     }
 
     .btn-delete {

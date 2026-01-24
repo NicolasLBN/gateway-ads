@@ -53,18 +53,6 @@
                     <input type="text" class="form-control" @bind="recipeName" placeholder="Enter recipe name" />
                 </div>
 
-                <h3>Preparation</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Volume (L)</label>
-                        <input type="number" class="form-control" @bind="preparationVolume" step="0.1" />
-                    </div>
-                    <div class="form-group">
-                        <label>Concentration (mol/L)</label>
-                        <input type="number" class="form-control" @bind="preparationConcentration" step="0.01" />
-                    </div>
-                </div>
-
                 <h3>Chemical Components</h3>
                 
                 @foreach (var (ingredient, index) in ingredients.Select((ing, idx) => (ing, idx)))
@@ -84,10 +72,6 @@
                         </div>
                         
                         <div class="ingredient-fields">
-                            <div class="form-group">
-                                <label>Quantity (g)</label>
-                                <input type="number" class="form-control-sm" @bind="ingredient.Quantity" placeholder="0.00" step="0.01" />
-                            </div>
                             <div class="form-group">
                                 <label>Volume (mL)</label>
                                 <input type="number" class="form-control-sm" @bind="ingredient.Volume" placeholder="0.00" step="0.1" />
@@ -149,8 +133,6 @@
 
 @code {
     private string recipeName = "";
-    private double preparationVolume = 0;
-    private double preparationConcentration = 0;
     private List<Ingredient> ingredients = new() { new Ingredient() };
     private bool isSubmitting = false;
     private bool isRunning = false;
@@ -178,12 +160,9 @@
         if (favorite != null)
         {
             recipeName = favorite.Name;
-            preparationVolume = favorite.PreparationVolume;
-            preparationConcentration = favorite.PreparationConcentration;
             ingredients = favorite.Ingredients.Select(i => new Ingredient
             {
                 Name = i.Name,
-                Quantity = i.Quantity,
                 Volume = i.Volume,
                 MolarMass = i.MolarMass
             }).ToList();
@@ -260,8 +239,8 @@
             {
                 Name = recipeName,
                 Ingredients = ingredients.ToList(),
-                PreparationVolume = preparationVolume,
-                PreparationConcentration = preparationConcentration
+                PreparationVolume = 0,
+                PreparationConcentration = 0
             };
 
             var result = await AdsService.SendRecipeAsync(recipe);
@@ -516,7 +495,7 @@
 
     .ingredient-fields {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
         margin-top: 12px;
     }
