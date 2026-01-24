@@ -98,15 +98,17 @@
 <h1>📊 Rapport de Recette</h1>
 
 <div class="meta">
-  <p><strong>Nom de la recette :</strong> {{recipeName}}</p>
-  <p><strong>Date :</strong> {{date}}</p>
-  <p><strong>Machine :</strong> {{machineName}}</p>
+  <p><strong>Nom de la recette :</strong> Analgesic Tablet Formulation</p>
+  <p><strong>Date :</strong> 7 décembre 2025 à 10:30</p>
+  <p><strong>Machine :</strong> Mixing Unit A</p>
 
   <h3 style="margin-top: 20px; color: #228be6;">Ingrédients Pharmaceutiques :</h3>
   <ul class="products-list">
-    {{#products}}
-      <li><strong>{{name}}</strong> — quantité: {{quantity}}g — volume: {{volume}}ml — masse molaire: {{molar}} g/L</li>
-    {{/products}}
+      <li><strong>Paracetamol</strong> — quantité: 500g — volume: 100ml — masse molaire: 151.16 g/L</li>
+      <li><strong>Microcrystalline Cellulose</strong> — quantité: 200g — volume: 150ml — masse molaire: 162.14 g/L</li>
+      <li><strong>Magnesium Stearate</strong> — quantité: 50g — volume: 40ml — masse molaire: 591.24 g/L</li>
+      <li><strong>Starch</strong> — quantité: 150g — volume: 120ml — masse molaire: 162.14 g/L</li>
+      <li><strong>Povidone</strong> — quantité: 100g — volume: 80ml — masse molaire: 111.14 g/L</li>
   </ul>
 </div>
 
@@ -133,16 +135,38 @@
 </thead>
 
 <tbody>
-  {{#steps}}
   <tr>
-    <td><strong>{{name}}</strong></td>
-    <td>{{time}}</td>
-    <td>{{temp}}</td>
-    <td>{{pressure}}</td>
-    <td>{{speed}}</td>
-    <td class="{{#remark}}{{remark}}{{/remark}}">{{remark}}</td>
+    <td><strong>Initial Mixing</strong></td>
+    <td>120</td>
+    <td>25</td>
+    <td>1.2</td>
+    <td>300</td>
+    <td class="ok">ok</td>
   </tr>
-  {{/steps}}
+  <tr>
+    <td><strong>Granulation</strong></td>
+    <td>180</td>
+    <td>30</td>
+    <td>1.5</td>
+    <td>450</td>
+    <td class="ok">ok</td>
+  </tr>
+  <tr>
+    <td><strong>Drying</strong></td>
+    <td>240</td>
+    <td>60</td>
+    <td>1</td>
+    <td>200</td>
+    <td class="ok">ok</td>
+  </tr>
+  <tr>
+    <td><strong>Final Blending</strong></td>
+    <td>150</td>
+    <td>25</td>
+    <td>1.2</td>
+    <td>350</td>
+    <td class="ok">ok</td>
+  </tr>
 </tbody>
 </table>
 
@@ -151,15 +175,34 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Extract data from the table for the chart
   const steps = [
-    {{#steps}}
     {
-      name: '{{name}}',
-      time: {{time}},
-      temp: {{temp}},
-      pressure: {{pressure}},
-      speed: {{speed}}
+      name: 'Initial Mixing',
+      time: 120,
+      temp: 25,
+      pressure: 1.2,
+      speed: 300
     },
-    {{/steps}}
+    {
+      name: 'Granulation',
+      time: 180,
+      temp: 30,
+      pressure: 1.5,
+      speed: 450
+    },
+    {
+      name: 'Drying',
+      time: 240,
+      temp: 60,
+      pressure: 1,
+      speed: 200
+    },
+    {
+      name: 'Final Blending',
+      time: 150,
+      temp: 25,
+      pressure: 1.2,
+      speed: 350
+    },
   ];
 
   // Prepare chart data
