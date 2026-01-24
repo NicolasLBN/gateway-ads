@@ -3,10 +3,12 @@
 @using BlazorApp.Components.Shared
 @using BlazorApp.Models
 @using BlazorApp.Services
+@using Microsoft.AspNetCore.WebUtilities
 @inject AdsService AdsService
 @inject AppStateService AppState
 @inject ReportService ReportService
 @inject HtmlReportService HtmlReportService
+@inject FavoritesService FavoritesService
 @inject NavigationManager Navigation
 
 <PageTitle>New Recipe</PageTitle>
@@ -158,6 +160,41 @@
     protected override void OnInitialized()
     {
         AppState.StateChanged += OnStateChanged;
+        
+        // Load from favorite if favoriteId is provided in query string
+        var uri = new Uri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("favoriteId", out var favoriteIdStr))
+        {
+            if (int.TryParse(favoriteIdStr, out var favoriteId))
+            {
+                LoadFromFavorite(favoriteId);
+            }
+        }
+    }
+
+    private void LoadFromFavorite(int favoriteId)
+    {
+        var favorite = FavoritesService.GetFavorite(favoriteId);
+        if (favorite != null)
+        {
+            recipeName = favorite.Name;
+            preparationVolume = favorite.PreparationVolume;
+            preparationConcentration = favorite.PreparationConcentration;
+            ingredients = favorite.Ingredients.Select(i => new Ingredient
+            {
+                Name = i.Name,
+                Quantity = i.Quantity,
+                Volume = i.Volume,
+                MolarMass = i.MolarMass
+            }).ToList();
+            
+            if (ingredients.Count == 0)
+            {
+                ingredients = new() { new Ingredient() };
+            }
+            
+            success = $"Recipe loaded from favorite: {favorite.Name}";
+        }
     }
 
     private void OnStateChanged()
