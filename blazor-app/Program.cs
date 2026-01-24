@@ -13,6 +13,7 @@ builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<MachineService>();
 builder.Services.AddSingleton<ReportService>();
 builder.Services.AddSingleton<HtmlReportService>();
+builder.Services.AddSingleton<AuthService>();
 
 // Add background service for PLC polling
 builder.Services.AddHostedService<PlcPollingService>();

@@ -1,5 +1,8 @@
 @page "/"
 @rendermode InteractiveServer
+@using BlazorApp.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -24,8 +27,24 @@
             <h2>Machine Settings</h2>
             <p>Configure PLC connection and machine parameters</p>
         </a>
+
+        <a href="/favorites" class="dashboard-card">
+            <div class="card-icon">⭐</div>
+            <h2>Favorites</h2>
+            <p>Manage and use your favorite recipes</p>
+        </a>
     </div>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+}
 
 <style>
     .dashboard {
