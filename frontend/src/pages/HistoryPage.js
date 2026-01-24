@@ -16,70 +16,70 @@ import {
 import { IconArrowLeft, IconDownload, IconAlertCircle } from '@tabler/icons-react';
 import { api } from '../services/api';
 
-// Fake history data - Using product and flavor ingredients
+// Fake history data - Using pharmaceutical products
 const fakeHistory = [
   {
     id: '1',
-    recipeName: 'Vanilla Cream Mix',
+    recipeName: 'Analgesic Tablet Formulation',
     machineName: 'Mixing Unit A',
     date: new Date('2025-12-07T10:30:00'),
     products: [
-      { name: 'Milk Powder' },
-      { name: 'Sugar' },
-      { name: 'Natural Vanilla Extract' },
-      { name: 'Cream Base' },
-      { name: 'Stabilizer' },
+      { name: 'Paracetamol' },
+      { name: 'Microcrystalline Cellulose' },
+      { name: 'Magnesium Stearate' },
+      { name: 'Starch' },
+      { name: 'Povidone' },
     ],
   },
   {
     id: '2',
-    recipeName: 'Chocolate Flavor Blend',
+    recipeName: 'Antibiotic Suspension',
     machineName: 'Mixing Unit B',
     date: new Date('2025-12-06T14:20:00'),
     products: [
-      { name: 'Cocoa Powder' },
-      { name: 'Sweetener' },
-      { name: 'Chocolate Flavor' },
-      { name: 'Emulsifier' },
-      { name: 'Milk Base' },
+      { name: 'Amoxicillin' },
+      { name: 'Citric Acid' },
+      { name: 'Sodium Benzoate' },
+      { name: 'Sucrose' },
+      { name: 'Colloidal Silicon Dioxide' },
     ],
   },
   {
     id: '3',
-    recipeName: 'Strawberry Essence',
+    recipeName: 'Vitamin C Complex',
     machineName: 'Mixing Unit A',
     date: new Date('2025-12-05T08:15:00'),
     products: [
-      { name: 'Strawberry Concentrate' },
-      { name: 'Natural Color' },
-      { name: 'Flavor Enhancer' },
-      { name: 'Sugar Syrup' },
+      { name: 'Ascorbic Acid' },
+      { name: 'Sodium Ascorbate' },
+      { name: 'Citrus Bioflavonoids' },
+      { name: 'Calcium Carbonate' },
     ],
   },
   {
     id: '4',
-    recipeName: 'Lemon Citrus Mix',
+    recipeName: 'Antacid Formulation',
     machineName: 'Mixing Unit C',
     date: new Date('2025-12-04T16:45:00'),
     products: [
-      { name: 'Lemon Oil' },
-      { name: 'Citric Acid' },
-      { name: 'Natural Lemon Flavor' },
-      { name: 'Sweetener' },
-      { name: 'Stabilizer' },
+      { name: 'Calcium Carbonate' },
+      { name: 'Magnesium Hydroxide' },
+      { name: 'Aluminum Hydroxide' },
+      { name: 'Sorbitol' },
+      { name: 'Peppermint Oil' },
     ],
   },
   {
     id: '5',
-    recipeName: 'Caramel Flavor Base',
+    recipeName: 'Cough Syrup Base',
     machineName: 'Mixing Unit B',
     date: new Date('2025-12-03T11:00:00'),
     products: [
-      { name: 'Caramel Color' },
-      { name: 'Butter Flavor' },
-      { name: 'Brown Sugar' },
-      { name: 'Vanilla Extract' },
-      { name: 'Cream Powder' },
+      { name: 'Dextromethorphan' },
+      { name: 'Guaifenesin' },
+      { name: 'Glycerin' },
+      { name: 'Sodium Citrate' },
+      { name: 'Menthol' },
     ],
   },
 ];
@@ -188,7 +188,7 @@ function HistoryPage() {
 
                 <div>
                   <Text size="sm" fw={500} mb="xs">
-                    Products & Flavors:
+                    Active Ingredients:
                   </Text>
                   <Group gap="xs">
                     {report.products?.slice(0, 3).map((p, i) => (

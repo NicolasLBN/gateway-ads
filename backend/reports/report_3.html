@@ -98,15 +98,16 @@
 <h1>📊 Rapport de Recette</h1>
 
 <div class="meta">
-  <p><strong>Nom de la recette :</strong> {{recipeName}}</p>
-  <p><strong>Date :</strong> {{date}}</p>
-  <p><strong>Machine :</strong> {{machineName}}</p>
+  <p><strong>Nom de la recette :</strong> Vitamin C Complex</p>
+  <p><strong>Date :</strong> 5 décembre 2025 à 08:15</p>
+  <p><strong>Machine :</strong> Mixing Unit A</p>
 
   <h3 style="margin-top: 20px; color: #228be6;">Ingrédients Pharmaceutiques :</h3>
   <ul class="products-list">
-    {{#products}}
-      <li><strong>{{name}}</strong> — quantité: {{quantity}}g — volume: {{volume}}ml — masse molaire: {{molar}} g/L</li>
-    {{/products}}
+      <li><strong>Ascorbic Acid</strong> — quantité: 600g — volume: 300ml — masse molaire: 176.12 g/L</li>
+      <li><strong>Sodium Ascorbate</strong> — quantité: 200g — volume: 150ml — masse molaire: 198.11 g/L</li>
+      <li><strong>Citrus Bioflavonoids</strong> — quantité: 150g — volume: 120ml — masse molaire: 302.24 g/L</li>
+      <li><strong>Calcium Carbonate</strong> — quantité: 100g — volume: 80ml — masse molaire: 100.09 g/L</li>
   </ul>
 </div>
 
@@ -133,16 +134,22 @@
 </thead>
 
 <tbody>
-  {{#steps}}
   <tr>
-    <td><strong>{{name}}</strong></td>
-    <td>{{time}}</td>
-    <td>{{temp}}</td>
-    <td>{{pressure}}</td>
-    <td>{{speed}}</td>
-    <td class="{{#remark}}{{remark}}{{/remark}}">{{remark}}</td>
+    <td><strong>Ingredient Mixing</strong></td>
+    <td>140</td>
+    <td>22</td>
+    <td>1</td>
+    <td>300</td>
+    <td class="ok">ok</td>
   </tr>
-  {{/steps}}
+  <tr>
+    <td><strong>Compression</strong></td>
+    <td>160</td>
+    <td>24</td>
+    <td>2</td>
+    <td>250</td>
+    <td class="ok">ok</td>
+  </tr>
 </tbody>
 </table>
 
@@ -151,15 +158,20 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Extract data from the table for the chart
   const steps = [
-    {{#steps}}
     {
-      name: '{{name}}',
-      time: {{time}},
-      temp: {{temp}},
-      pressure: {{pressure}},
-      speed: {{speed}}
+      name: 'Ingredient Mixing',
+      time: 140,
+      temp: 22,
+      pressure: 1,
+      speed: 300
     },
-    {{/steps}}
+    {
+      name: 'Compression',
+      time: 160,
+      temp: 24,
+      pressure: 2,
+      speed: 250
+    },
   ];
 
   // Prepare chart data

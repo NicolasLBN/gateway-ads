@@ -129,27 +129,49 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/history/:id/pdf - Download PDF
+// GET /api/history/:id/pdf - Download PDF or open HTML report
 router.get('/:id/pdf', async (req, res) => {
   try {
     const history = await loadHistory();
     const report = history.find(r => r.id === req.params.id);
 
-    if (!report || !report.pdfPath) {
-      return res.status(404).json({
-        success: false,
-        error: 'PDF not found',
-      });
+    if (!report) {
+      // Try to serve HTML report file directly if report not in history
+      const htmlFilename = `report_${req.params.id}.html`;
+      const htmlPath = path.join(REPORTS_DIR, htmlFilename);
+      
+      try {
+        await fs.access(htmlPath);
+        return res.sendFile(htmlPath);
+      } catch (error) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found',
+        });
+      }
     }
 
-    // Check if file exists
+    // Check for PDF first, then HTML
+    if (report.pdfPath) {
+      try {
+        await fs.access(report.pdfPath);
+        return res.download(report.pdfPath);
+      } catch (error) {
+        // PDF not found, try HTML
+      }
+    }
+    
+    // Try HTML report
+    const htmlFilename = `report_${report.id}.html`;
+    const htmlPath = path.join(REPORTS_DIR, htmlFilename);
+    
     try {
-      await fs.access(report.pdfPath);
-      res.download(report.pdfPath);
+      await fs.access(htmlPath);
+      res.sendFile(htmlPath);
     } catch (error) {
       return res.status(404).json({
         success: false,
-        error: 'PDF file not found on disk',
+        error: 'Report file not found on disk',
       });
     }
   } catch (error) {
