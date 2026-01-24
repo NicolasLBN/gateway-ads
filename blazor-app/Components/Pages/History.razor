@@ -33,7 +33,7 @@
                     </div>
 
                     <div class="ingredients-section">
-                        <p class="ingredients-label">Products & Flavors:</p>
+                        <p class="ingredients-label">Chemical Products:</p>
                         <div class="ingredient-badges">
                             @foreach (var ingredient in report.Products.Take(3))
                             {
@@ -70,8 +70,8 @@
 
     private void DownloadReport(string reportId)
     {
-        // Navigate to the HTML report
-        Navigation.NavigateTo($"/reports/report_{reportId}.html", true);
+        // Navigate to the static HTML report file
+        Navigation.NavigateTo($"/reports/report_{reportId}.html", forceLoad: true);
     }
 }
 

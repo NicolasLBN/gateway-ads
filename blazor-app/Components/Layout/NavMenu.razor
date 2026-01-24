@@ -1,4 +1,9 @@
-﻿<nav class="nav-menu">
+﻿@using BlazorApp.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<nav class="nav-menu">
     <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
         <span class="nav-icon">🏠</span>
         <span class="nav-text">Dashboard</span>
@@ -7,6 +12,11 @@
     <NavLink class="nav-link" href="new-recipe">
         <span class="nav-icon">➕</span>
         <span class="nav-text">New Recipe</span>
+    </NavLink>
+
+    <NavLink class="nav-link" href="favorites">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-text">Favorites</span>
     </NavLink>
 
     <NavLink class="nav-link" href="history">
@@ -23,7 +33,33 @@
         <span class="nav-icon">🔧</span>
         <span class="nav-text">Developer</span>
     </NavLink>
+
+    @if (AuthService.IsAuthenticated)
+    {
+        <button class="nav-link nav-logout" @onclick="Logout">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-text">Logout</span>
+        </button>
+    }
 </nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthService.OnAuthStateChanged += StateHasChanged;
+    }
+
+    private void Logout()
+    {
+        AuthService.Logout();
+        Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthStateChanged -= StateHasChanged;
+    }
+}
 
 <style>
     .nav-menu {
@@ -53,6 +89,16 @@
     .nav-link.active {
         background-color: rgba(255, 255, 255, 0.2);
         color: white;
+    }
+
+    .nav-logout {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+    }
+
+    .nav-logout:hover {
+        background-color: rgba(255, 100, 100, 0.2);
     }
 
     .nav-icon {

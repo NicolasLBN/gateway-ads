@@ -76,3 +76,8 @@ nupkg/
 
 # Keep reports directory but ignore generated PDFs
 wwwroot/reports/*.pdf
+
+# LiteDB database files (user data and favorites)
+Data/*.db
+Data/*.db-shm
+Data/*.db-wal

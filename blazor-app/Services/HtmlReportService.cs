@@ -260,7 +260,7 @@ public class HtmlReportService
         </div>
 
         <section>
-            <h2>Products & Flavors</h2>
+            <h2>Chemical Products</h2>
             <table>
                 <thead>
                     <tr>
@@ -277,7 +277,7 @@ public class HtmlReportService
         </section>
 
         <section>
-            <h2>Ingredient Pouring Steps</h2>
+            <h2>Process Steps</h2>
             <table>
                 <thead>
                     <tr>
