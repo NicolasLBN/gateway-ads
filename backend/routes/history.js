@@ -157,7 +157,8 @@ router.get('/:id/pdf', async (req, res) => {
         await fs.access(report.pdfPath);
         return res.download(report.pdfPath);
       } catch (error) {
-        // PDF not found, try HTML
+        // PDF not found, fall back to HTML report
+        console.log(`PDF not found for report ${report.id}, trying HTML format`);
       }
     }
     
