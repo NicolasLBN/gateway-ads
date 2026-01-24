@@ -29,7 +29,8 @@ Thumbs.db
 
 # Reports and data
 backend/reports/*.pdf
-backend/data/
+backend/data/*
+!backend/data/history.json
 
 # Logs
 *.log
