@@ -4,6 +4,9 @@ namespace BlazorApp.Services;
 
 public class AppStateService
 {
+    private const int MIN_PROCESS_STEP = 0;
+    private const int MAX_PROCESS_STEP = 7;
+    
     private readonly AdsService _adsService;
     private Machine? _selectedMachine;
     private Recipe? _currentRecipe;
@@ -55,7 +58,7 @@ public class AppStateService
 
         // Group history by step
         var stepGroups = _processHistory
-            .Where(p => p.Status.CurrentStep > 0 && p.Status.CurrentStep < 7)
+            .Where(p => p.Status.CurrentStep > MIN_PROCESS_STEP && p.Status.CurrentStep < MAX_PROCESS_STEP)
             .GroupBy(p => p.Status.CurrentStep)
             .OrderBy(g => g.Key);
 

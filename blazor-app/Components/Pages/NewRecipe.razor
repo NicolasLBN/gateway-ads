@@ -161,6 +161,9 @@
 </div>
 
 @code {
+    private const int RECIPE_PROCESSING_DELAY_MS = 200;
+    private const int NAVIGATION_DELAY_MS = 2000;
+    
     private string recipeName = "";
     private List<Ingredient> ingredients = new() { new Ingredient() };
     private bool isSubmitting = false;
@@ -334,14 +337,14 @@
             var recipeSent = await AdsService.SendRecipeAsync(recipe);
             if (!recipeSent)
             {
-                error = "Failed to send recipe to PLC";
+                error = "Failed to send recipe to PLC. Please check the connection and try again.";
                 return;
             }
 
             AppState.SetCurrentRecipe(recipe);
             
             // Small delay to ensure PLC has processed the recipe
-            await Task.Delay(200);
+            await Task.Delay(RECIPE_PROCESSING_DELAY_MS);
 
             // Now start the process
             var result = await AdsService.StartProcessAsync();
@@ -414,7 +417,7 @@
             
             success = "Report saved successfully!";
             
-            await Task.Delay(2000);
+            await Task.Delay(NAVIGATION_DELAY_MS);
             Navigation.NavigateTo("/history");
         }
         catch (Exception ex)
@@ -451,7 +454,7 @@
             
             success = "Report generated successfully!";
             
-            await Task.Delay(2000);
+            await Task.Delay(NAVIGATION_DELAY_MS);
             Navigation.NavigateTo("/history");
         }
         catch (Exception ex)
