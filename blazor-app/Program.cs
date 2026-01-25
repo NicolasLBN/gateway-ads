@@ -19,6 +19,9 @@ builder.Services.AddSingleton<FavoritesService>();
 // Add background service for PLC polling
 builder.Services.AddHostedService<PlcPollingService>();
 
+// Add startup service for generating sample reports
+builder.Services.AddHostedService<StartupService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
