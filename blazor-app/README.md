@@ -51,7 +51,7 @@ Complete industrial application for recipe management, PLC control via ADS, and 
 - **TwinCAT 3 XAE** (for PLC simulation)
 - **Windows** (for TwinCAT 3 - ADS protocol is Windows-specific)
 
-## 🚀 Installation
+## 🚀 Installation 
 
 ### 1. Clone the Repository 
 
