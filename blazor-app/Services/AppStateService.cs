@@ -46,6 +46,56 @@ public class AppStateService
         NotifyStateChanged();
     }
 
+    public List<ProcessStep> GetProcessStepsFromHistory()
+    {
+        var steps = new List<ProcessStep>();
+        
+        if (_processHistory.Count == 0 || _machineHistory.Count == 0)
+            return steps;
+
+        // Group history by step
+        var stepGroups = _processHistory
+            .Where(p => p.Status.CurrentStep > 0 && p.Status.CurrentStep < 7)
+            .GroupBy(p => p.Status.CurrentStep)
+            .OrderBy(g => g.Key);
+
+        foreach (var stepGroup in stepGroups)
+        {
+            var stepData = stepGroup.ToList();
+            if (stepData.Count == 0) continue;
+
+            var firstInStep = stepData.First();
+            var lastInStep = stepData.Last();
+            
+            // Find corresponding machine data for this step
+            var machineDataForStep = _machineHistory
+                .Where(m => m.Time >= firstInStep.Time && m.Time <= lastInStep.Time)
+                .ToList();
+
+            if (machineDataForStep.Count > 0)
+            {
+                // Calculate average values for the step
+                var avgTemp = machineDataForStep.Average(m => m.Status.MotorTemperature);
+                var avgPressure = machineDataForStep.Average(m => m.Status.OilPressure);
+                var avgSpeed = machineDataForStep.Average(m => m.Status.MotorSpeed);
+                
+                var stepDuration = (int)(lastInStep.Time - firstInStep.Time).TotalSeconds;
+                
+                steps.Add(new ProcessStep
+                {
+                    Name = firstInStep.Status.StepName,
+                    Time = stepDuration,
+                    Temp = Math.Round(avgTemp, 1),
+                    Pressure = Math.Round(avgPressure, 2),
+                    Speed = Math.Round(avgSpeed, 0),
+                    Remark = firstInStep.Status.ErrorCode != 0 ? firstInStep.Status.ErrorText : "OK"
+                });
+            }
+        }
+
+        return steps;
+    }
+
     private void OnMachineStatusUpdated(object? sender, MachineStatus status)
     {
         LatestMachineStatus = status;

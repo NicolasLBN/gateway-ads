@@ -111,11 +111,17 @@
                     </button>
                 </div>
 
-                @if (AppState.LatestProcessStatus?.ProcessDone == true)
+                @if (AppState.LatestProcessStatus?.ProcessDone == true && !showSaveDialog)
                 {
-                    <button class="btn btn-info" @onclick="GenerateReport">
-                        <Icon Name="file" Size="16" /> Generate HTML Report
-                    </button>
+                    <div class="process-complete-notice">
+                        <p><Icon Name="check" Size="20" /> Process completed successfully!</p>
+                        <button class="btn btn-success" @onclick="ShowSaveDialog">
+                            <Icon Name="save" Size="16" /> Save Recording
+                        </button>
+                        <button class="btn btn-secondary" @onclick="DiscardRecording">
+                            <Icon Name="x" Size="16" /> Discard
+                        </button>
+                    </div>
                 }
             </div>
         </div>
@@ -129,6 +135,29 @@
     <div class="chart-section">
         <RealtimeChart />
     </div>
+
+    @if (showSaveDialog)
+    {
+        <div class="modal-overlay" @onclick="() => showSaveDialog = false">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <h2>Save Process Recording</h2>
+                <p>Would you like to save this process recording to the reports?</p>
+                <div class="modal-info">
+                    <p><strong>Recipe:</strong> @recipeName</p>
+                    <p><strong>Machine:</strong> @(AppState.SelectedMachine?.Name ?? "Unknown")</p>
+                    <p><strong>Duration:</strong> @(AppState.LatestProcessStatus?.TotalTime ?? 0) seconds</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-success" @onclick="SaveAndGenerateReport">
+                        <Icon Name="save" Size="16" /> Save & Generate Report
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => showSaveDialog = false">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -136,6 +165,7 @@
     private List<Ingredient> ingredients = new() { new Ingredient() };
     private bool isSubmitting = false;
     private bool isRunning = false;
+    private bool showSaveDialog = false;
     private string? error;
     private string? success;
 
@@ -273,16 +303,51 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(recipeName))
+        {
+            error = "Please enter a recipe name before running the process";
+            return;
+        }
+
+        if (ingredients.Count == 0 || string.IsNullOrWhiteSpace(ingredients[0].Name))
+        {
+            error = "Please add at least one ingredient before running the process";
+            return;
+        }
+
         isRunning = true;
         error = null;
+        success = null;
         AppState.ClearProcessHistory();
 
         try
         {
+            // First, ensure recipe is sent to PLC
+            var recipe = new Recipe
+            {
+                Name = recipeName,
+                Ingredients = ingredients.ToList(),
+                PreparationVolume = 0,
+                PreparationConcentration = 0
+            };
+
+            var recipeSent = await AdsService.SendRecipeAsync(recipe);
+            if (!recipeSent)
+            {
+                error = "Failed to send recipe to PLC";
+                return;
+            }
+
+            AppState.SetCurrentRecipe(recipe);
+            
+            // Small delay to ensure PLC has processed the recipe
+            await Task.Delay(200);
+
+            // Now start the process
             var result = await AdsService.StartProcessAsync();
             if (result)
             {
-                success = "Process started successfully!";
+                success = "Process started successfully with recipe!";
             }
             else
             {
@@ -299,25 +364,86 @@
         }
     }
 
-    private async Task GenerateReport()
+    private void ShowSaveDialog()
+    {
+        showSaveDialog = true;
+    }
+
+    private async Task DiscardRecording()
     {
         try
         {
+            await AdsService.ResetProcessAsync();
+            AppState.ClearProcessHistory();
+            success = "Recording discarded";
+            showSaveDialog = false;
+        }
+        catch (Exception ex)
+        {
+            error = $"Error discarding recording: {ex.Message}";
+        }
+    }
+
+    private async Task SaveAndGenerateReport()
+    {
+        try
+        {
+            showSaveDialog = false;
+            
+            // Get actual process steps from recorded history
+            var processSteps = AppState.GetProcessStepsFromHistory();
+            
+            // Fallback to empty list if no data captured
+            if (processSteps.Count == 0)
+            {
+                error = "No process data captured. Please ensure the process completed successfully.";
+                return;
+            }
+
             var report = new Report
             {
                 RecipeName = recipeName,
                 MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
                 Date = DateTime.Now,
                 Products = ingredients.ToList(),
-                Steps = new List<ProcessStep>
-                {
-                    new() { Name = "Preparation", Time = 5, Temp = 28, Pressure = 3.2, Speed = 0, Remark = "OK" },
-                    new() { Name = "Dosing A", Time = 7, Temp = 32, Pressure = 3.5, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Dosing B", Time = 7, Temp = 35, Pressure = 3.6, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Mixing", Time = 10, Temp = 38, Pressure = 3.8, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Verification", Time = 4, Temp = 36, Pressure = 3.4, Speed = 800, Remark = "OK" },
-                    new() { Name = "Finalizing", Time = 3, Temp = 30, Pressure = 3.0, Speed = 0, Remark = "OK" }
-                }
+                Steps = processSteps
+            };
+
+            ReportService.AddReport(report);
+            var fileName = HtmlReportService.GenerateReport(report);
+            
+            success = "Report saved successfully!";
+            
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/history");
+        }
+        catch (Exception ex)
+        {
+            error = $"Error saving report: {ex.Message}";
+        }
+    }
+
+    private async Task GenerateReport()
+    {
+        try
+        {
+            // Get actual process steps from recorded history
+            var processSteps = AppState.GetProcessStepsFromHistory();
+            
+            // Fallback to empty list if no data captured
+            if (processSteps.Count == 0)
+            {
+                error = "No process data captured. Please ensure the process completed successfully.";
+                return;
+            }
+
+            var report = new Report
+            {
+                RecipeName = recipeName,
+                MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
+                Date = DateTime.Now,
+                Products = ingredients.ToList(),
+                Steps = processSteps
             };
 
             ReportService.AddReport(report);
@@ -684,5 +810,83 @@
 
     .alert-close:hover {
         opacity: 1;
+    }
+
+    .process-complete-notice {
+        margin-top: 24px;
+        padding: 20px;
+        background-color: #d3f9d8;
+        border: 2px solid #b2f2bb;
+        border-radius: 8px;
+    }
+
+    .process-complete-notice p {
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2b8a3e;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .process-complete-notice .btn {
+        margin-right: 12px;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content h2 {
+        margin: 0 0 16px 0;
+        font-size: 24px;
+        color: #212529;
+    }
+
+    .modal-content p {
+        margin: 0 0 16px 0;
+        color: #495057;
+        font-size: 16px;
+    }
+
+    .modal-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+    }
+
+    .modal-info p {
+        margin: 8px 0;
+        font-size: 15px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .modal-actions .btn {
+        flex: 1;
     }
 </style>
