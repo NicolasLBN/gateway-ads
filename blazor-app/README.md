@@ -53,7 +53,7 @@ Complete industrial application for recipe management, PLC control via ADS, and 
 
 ## 🚀 Installation
 
-### 1. Clone the Repository
+### 1. Clone the Repository 
 
 ```bash
 git clone https://github.com/NicolasLBN/gateway-ads.git
