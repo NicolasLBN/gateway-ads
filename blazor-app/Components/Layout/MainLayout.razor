@@ -62,12 +62,13 @@
         flex-direction: column;
         min-height: 100vh;
         overflow-x: hidden;
+        background-color: #f8f9fa;
     }
 
     .app-header {
-        background-color: #228be6;
+        background: linear-gradient(135deg, #1c7ed6 0%, #228be6 50%, #339af0 100%);
         color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         position: sticky;
         top: 0;
         z-index: 100;
@@ -81,19 +82,23 @@
         padding: 0 30px;
         max-width: 100%;
         margin: 0 auto;
+        height: 64px;
     }
 
     @@media (max-width: 768px) {
         .header-content {
             padding: 0 15px;
+            height: 56px;
         }
     }
 
     .app-title {
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 700;
         margin: 0;
         color: white;
+        letter-spacing: -0.3px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     @@media (max-width: 768px) {
@@ -107,13 +112,13 @@
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
-        padding: 30px;
+        padding: 32px;
         overflow-x: hidden;
     }
 
     @@media (max-width: 768px) {
         .main-container {
-            padding: 15px;
+            padding: 20px 15px;
         }
     }
 
@@ -124,16 +129,17 @@
     }
 
     .app-footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid #dee2e6;
-        padding: 15px 30px;
+        background-color: #ffffff;
+        border-top: 1px solid #e9ecef;
+        padding: 16px 30px;
         margin-top: auto;
         width: 100%;
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.04);
     }
 
     @@media (max-width: 768px) {
         .app-footer {
-            padding: 12px 15px;
+            padding: 14px 15px;
         }
     }
 
@@ -141,46 +147,53 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         max-width: 100%;
         margin: 0 auto;
         flex-wrap: wrap;
     }
 
     .footer-label {
-        font-weight: 500;
+        font-weight: 600;
         color: #495057;
-        font-size: 14px;
+        font-size: 13px;
+        letter-spacing: 0.3px;
     }
 
     @@media (max-width: 768px) {
         .footer-label {
-            font-size: 13px;
+            font-size: 12px;
         }
     }
 
     .connection-badge {
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
         font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.3px;
     }
 
     @@media (max-width: 768px) {
         .connection-badge {
-            font-size: 13px;
-            padding: 5px 10px;
+            font-size: 12px;
+            padding: 5px 12px;
         }
     }
 
     .connection-badge.connected {
         background-color: #d3f9d8;
         color: #2b8a3e;
+        border: 1px solid #8ce99a;
     }
 
     .connection-badge.disconnected {
         background-color: #ffe0e0;
         color: #c92a2a;
+        border: 1px solid #ffa8a8;
     }
 </style>
 

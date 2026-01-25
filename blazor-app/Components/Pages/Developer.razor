@@ -13,7 +13,7 @@
     </div>
 
     <div class="warning-banner">
-        <span class="warning-icon">⚠️</span>
+        <span class="warning-icon"><Icon Name="warning" Size="24" /></span>
         <div>
             <strong>Developer Mode</strong>
             <p>This page is for advanced configuration. Please ensure you understand the settings before making changes.</p>
@@ -46,7 +46,7 @@
         @if (AppState.IsConnected)
         {
             <div class="alert alert-warning">
-                <strong>⚠️ Connection Active</strong>
+                <strong><Icon Name="warning" Size="16" /> Connection Active</strong>
                 <p>Please disconnect from the PLC before changing configuration settings.</p>
             </div>
         }

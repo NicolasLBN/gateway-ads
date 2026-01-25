@@ -44,14 +44,14 @@
             @if (process.ProcessDone)
             {
                 <div class="process-done">
-                    ✓ Process completed successfully!
+                    <Icon Name="check" Size="16" /> Process completed successfully!
                 </div>
             }
 
             @if (process.ErrorCode != 0)
             {
                 <div class="process-error">
-                    ⚠️ Error @process.ErrorCode: @process.ErrorText
+                    <Icon Name="warning" Size="16" /> Error @process.ErrorCode: @process.ErrorText
                 </div>
             }
         </div>
@@ -69,7 +69,7 @@
                         <div class="timeline-marker">
                             @if (isComplete)
                             {
-                                <span>✓</span>
+                                <span><Icon Name="check" Size="14" /></span>
                             }
                             else
                             {
