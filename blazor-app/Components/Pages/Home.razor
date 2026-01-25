@@ -11,25 +11,25 @@
 
     <div class="dashboard-grid">
         <a href="/new-recipe" class="dashboard-card">
-            <div class="card-icon">➕</div>
+            <div class="card-icon"><Icon Name="plus" Size="48" /></div>
             <h2>Create New Recipe</h2>
             <p>Start a new recipe and configure ingredients</p>
         </a>
 
         <a href="/history" class="dashboard-card">
-            <div class="card-icon">📋</div>
+            <div class="card-icon"><Icon Name="list" Size="48" /></div>
             <h2>View Recipe History</h2>
             <p>Access past recipes and download reports</p>
         </a>
 
         <a href="/machine-settings" class="dashboard-card">
-            <div class="card-icon">⚙️</div>
+            <div class="card-icon"><Icon Name="settings" Size="48" /></div>
             <h2>Machine Settings</h2>
             <p>Configure PLC connection and machine parameters</p>
         </a>
 
         <a href="/favorites" class="dashboard-card">
-            <div class="card-icon">⭐</div>
+            <div class="card-icon"><Icon Name="star" Size="48" /></div>
             <h2>Favorites</h2>
             <p>Manage and use your favorite recipes</p>
         </a>
@@ -69,7 +69,7 @@
     .dashboard-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 30px;
+        gap: 24px;
     }
 
     @@media (max-width: 768px) {
@@ -82,8 +82,8 @@
     .dashboard-card {
         background: white;
         border-radius: 12px;
-        padding: 40px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
         text-decoration: none;
         color: inherit;
         transition: all 0.3s ease;
@@ -92,48 +92,75 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        position: relative;
+        overflow: hidden;
     }
 
     @@media (max-width: 768px) {
         .dashboard-card {
-            padding: 30px 20px;
+            padding: 28px 20px;
         }
     }
 
+    .dashboard-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #228be6 0%, #339af0 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-card:hover::before {
+        transform: scaleX(1);
+    }
+
     .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: rgba(34, 139, 230, 0.2);
     }
 
     .card-icon {
-        font-size: 64px;
+        color: #228be6;
         margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-card:hover .card-icon {
+        transform: scale(1.1);
     }
 
     @@media (max-width: 768px) {
         .card-icon {
-            font-size: 48px;
             margin-bottom: 15px;
         }
     }
 
     .dashboard-card h2 {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 600;
         color: #212529;
-        margin: 0 0 10px 0;
+        margin: 0 0 12px 0;
+        letter-spacing: -0.3px;
     }
 
     @@media (max-width: 768px) {
         .dashboard-card h2 {
             font-size: 18px;
+            margin-bottom: 10px;
         }
     }
 
     .dashboard-card p {
         font-size: 14px;
-        color: #868e96;
+        color: #6c757d;
         margin: 0;
+        line-height: 1.6;
     }
 
     @@media (max-width: 768px) {

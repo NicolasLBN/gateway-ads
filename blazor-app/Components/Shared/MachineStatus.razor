@@ -21,7 +21,7 @@
                 <div class="status-value">@status.MotorTemperature.ToString("F1")°C</div>
                 @if (status.TempWarning)
                 {
-                    <div class="status-warning">⚠️ Warning</div>
+                    <div class="status-warning"><Icon Name="warning" Size="16" /> Warning</div>
                 }
             </div>
 
@@ -30,7 +30,7 @@
                 <div class="status-value">@status.OilPressure.ToString("F2") bar</div>
                 @if (status.PressureWarning)
                 {
-                    <div class="status-warning">⚠️ Warning</div>
+                    <div class="status-warning"><Icon Name="warning" Size="16" /> Warning</div>
                 }
             </div>
 
@@ -39,7 +39,7 @@
                 <div class="status-value">@status.MotorSpeed.ToString("F0") RPM</div>
                 @if (status.SpeedWarning)
                 {
-                    <div class="status-warning">⚠️ Warning</div>
+                    <div class="status-warning"><Icon Name="warning" Size="16" /> Warning</div>
                 }
             </div>
         </div>

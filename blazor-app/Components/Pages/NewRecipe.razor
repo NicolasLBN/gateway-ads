@@ -22,7 +22,7 @@
     @if (!AppState.IsConnected)
     {
         <div class="alert alert-danger">
-            <strong>⚠️ Not Connected</strong>
+            <strong><Icon Name="warning" Size="16" /> Not Connected</strong>
             <p>Not connected to machine. Please go to Machine Settings to connect.</p>
         </div>
     }
@@ -31,7 +31,7 @@
     {
         <div class="alert alert-danger">
             @error
-            <button class="alert-close" @onclick="() => error = null">✕</button>
+            <button class="alert-close" @onclick="() => error = null"><Icon Name="x" Size="14" /></button>
         </div>
     }
 
@@ -39,7 +39,7 @@
     {
         <div class="alert alert-success">
             @success
-            <button class="alert-close" @onclick="() => success = null">✕</button>
+            <button class="alert-close" @onclick="() => success = null"><Icon Name="x" Size="14" /></button>
         </div>
     }
 
@@ -62,7 +62,7 @@
                             <span>Component @(index + 1)</span>
                             @if (ingredients.Count > 1)
                             {
-                                <button class="btn-icon-danger" @onclick="() => RemoveIngredient(index)">🗑️</button>
+                                <button class="btn-icon-danger" @onclick="() => RemoveIngredient(index)"><Icon Name="trash" Size="16" /></button>
                             }
                         </div>
 
@@ -85,7 +85,7 @@
                 }
 
                 <button class="btn btn-secondary" @onclick="AddIngredient">
-                    ➕ Add Component
+                    <Icon Name="plus" Size="16" /> Add Component
                 </button>
 
                 <div class="action-buttons">
@@ -106,7 +106,7 @@
                         }
                         else
                         {
-                            <span>▶️ Run Process</span>
+                            <span><Icon Name="play" Size="16" /> Run Process</span>
                         }
                     </button>
                 </div>
@@ -114,7 +114,7 @@
                 @if (AppState.LatestProcessStatus?.ProcessDone == true)
                 {
                     <button class="btn btn-info" @onclick="GenerateReport">
-                        📄 Generate HTML Report
+                        <Icon Name="file" Size="16" /> Generate HTML Report
                     </button>
                 }
             </div>
