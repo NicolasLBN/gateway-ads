@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+{{CHARTJS_LIBRARY}}
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #333;
+        }
+        
+        .page {
+            width: 100%;
+            padding: 0;
+            margin: 0 auto;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(297mm - 30mm); /* A4 height minus margins */
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #00467f;
+            padding-bottom: 15px;
+        }
+        
+        .company-info {
+            text-align: left;
+            flex: 0 0 auto;
+        }
+        
+        .company-info h1 {
+            font-size: 12pt;
+            color: #00467f;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        
+        .company-info p {
+            font-size: 8pt;
+            color: #666;
+            margin: 2px 0;
+            line-height: 1.2;
+        }
+        
+        .report-title {
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+        }
+        
+        .report-title h2 {
+            font-size: 24pt;
+            color: #00467f;
+            font-weight: bold;
+            margin: 0;
+            margin-bottom: 5px;
+        }
+        
+        .report-title p {
+            font-size: 10pt;
+            color: #666;
+            margin: 0;
+        }
+        
+        .logo-container {
+            flex: 0 0 auto;
+            text-align: right;
+        }
+        
+        .logo-container img {
+            max-width: 120px;
+            max-height: 40px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .project-details {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .project-details h3 {
+            font-size: 10pt;
+            color: white;
+            background: #808080;
+            margin-bottom: 8px;
+            padding: 5px;
+            font-weight: bold;
+        }
+        
+        .project-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            font-size: 9pt;
+        }
+        
+        .project-detail-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .project-detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .project-detail-value {
+            color: #333;
+        }
+
+        .project-detail-remarks {
+            grid-column: 1 / -1; /* Span across all columns */
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .project-detail-value-remarks {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 8px;
+            min-height: 60px;
+            font-size: 9pt;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        /* Grid layout for cable and device specifications - 2 equal columns */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-section {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .info-section h3 {
+            font-size: 10pt;
+            color: white;
+            background: #808080;
+            margin-bottom: 8px;
+            padding: 5px;
+            font-weight: bold;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-size: 9pt;
+        }
+        
+        .info-row .label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .info-row .value {
+            text-align: right;
+        }
+        
+        .summary-section {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .summary-section h3 {
+            font-size: 10pt;
+            color: white;
+            background: #808080;
+            margin-bottom: 8px;
+            padding: 5px;
+            font-weight: bold;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-label {
+            font-size: 8pt;
+            color: #555;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .summary-value {
+            font-size: 9pt;
+            color: #333;
+        }
+        
+        .chart-section {
+            margin-bottom: 15px;
+        }
+        
+        .chart-section h3 {
+            font-size: 10pt;
+            color: white;
+            background: #808080;
+            margin-bottom: 8px;
+            padding: 5px;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            border: 1px solid #ddd;
+            padding: 10px 5px;
+            border-radius: 5px;
+            text-align: center;
+            height: 600px;
+            position: relative;
+            background: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-bottom: 15px;
+        }
+        
+        table th {
+            background: #808080;
+            color: white;
+            padding: 5px;
+            text-align: left;
+        }
+        
+        table td {
+            padding: 4px 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .highlight-row {
+            background: #fff3cd !important;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
+            margin-top: auto;
+        }
+        
+        .page-number {
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @page {
+            size: A4;
+            margin: 15mm 10mm;
+        }
+        
+        @media print {
+            .page {
+                page-break-after: always;
+            }
+        }
+        
+        /* Ensure tables break nicely across pages */
+        table {
+            page-break-inside: auto;
+        }
+        
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        
+        thead {
+            display: table-header-group;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="company-info">
+                <h1>{{COMPANY_NAME}}</h1>
+                <p>{{COMPANY_ADDRESS}}</p>
+                <p>{{COMPANY_PHONE}}</p>
+                <p>{{COMPANY_EMAIL}}</p>
+            </div>
+            <div class="report-title">
+                <h2>Laying Report</h2>
+            </div>
+                <div class="logo-container">
+                    <svg width="120" height="40" viewBox="0 0 442 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#clip0_77_3349)">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M429.822 110.441V35.7704C429.821 29.4852 427.303 23.4576 422.82 19.0134C418.337 14.5692 412.257 12.0725 405.917 12.0725H36.0816C29.7418 12.0725 23.6617 14.5693 19.1789 19.0135C14.696 23.4577 12.1775 29.4853 12.1775 35.7704V111.782C12.1776 118.068 14.696 124.095 19.1789 128.539C23.6618 132.984 29.7418 135.48 36.0816 135.48H203.861L207.469 147.552H36.0816C26.5122 147.552 17.3348 143.784 10.5682 137.076C3.80161 130.368 0.000119617 121.269 0 111.782V35.7704C1.19618e-05 26.2835 3.80146 17.1852 10.5681 10.4769C17.3347 3.76866 26.5121 1.18586e-05 36.0816 0H405.919C415.489 0.000275114 424.666 3.76904 431.432 10.4773C438.199 17.1855 442 26.2837 442 35.7704V111.782C442 121.269 438.199 130.367 431.432 137.075C424.666 143.783 415.489 147.552 405.919 147.552H234.53L238.138 135.48H405.917C412.257 135.48 418.337 132.984 422.82 128.539C427.303 124.095 429.821 118.068 429.822 111.782" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M305.987 29.4031L313.811 45.7949L323.995 45.7937L351.183 100.571C351.183 100.571 361.709 99.4038 370.506 98.8567L342.736 45.7937H354.446L345.31 29.3991L305.987 29.4031Z" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M403.122 45.7949H390.759L421.177 97.9039C409.45 98.0319 401.599 97.6608 401.599 97.6608L372.78 45.7937L362.448 45.7949L353.313 29.4031H391.977L403.122 45.7949Z" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M137.13 82.7386C137.13 82.7386 134.424 87.6662 137.237 89.7613C142.03 93.3313 145.26 84.2996 145.26 84.2996L167.796 29.3991H184.327L161.67 89.519C161.67 89.519 154.202 111.82 131.8 105.709C109.662 99.6702 120.762 78.1206 121.36 77.0181C123.553 72.9708 142.276 29.4031 142.276 29.4031H159.386L137.13 82.7386Z" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M74.7059 97.7083L109.821 29.4031H126.995L101.33 83.4914L115.777 84.3958L108.541 100.623C108.541 100.623 77.5877 97.2612 74.7059 97.7083Z" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M290.548 110.791L261.548 29.3991L296.928 29.4031L304.433 45.7949L286.779 45.794L292.18 59.5058L306.825 59.0587L313.349 74.2851L297.835 75.1549L304.214 90.6556L324.946 87.7859L331.732 102.921C331.732 102.921 309.472 106.047 290.548 110.791Z" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M208.525 29.4031H193.373L164.744 111.819C171.867 113.608 183.846 116.899 183.846 116.899L197.954 61.517L220.995 148L244.01 61.4637L258.832 118.702C258.832 118.702 270.577 115.398 277.699 113.608L248.875 29.4031H233.32L221.093 89.481" fill="#002169"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M52.1412 77.5442H66.0696C66.0696 77.5442 75.8568 79.1087 82.2732 67.8191L95.3232 45.2391C104.676 28.5835 89.1248 29.4075 89.1248 29.4075L61.6104 29.4031L20.8293 98.0126C27.6644 97.2663 34.5435 96.9901 41.4172 97.1861L61.1391 61.1493L70.5282 45.798H75.2044C79.2764 45.7439 76.7465 49.1546 76.7465 49.1546L71.4227 58.1534C69.8213 61.5034 66.9394 61.1493 66.9394 61.1493H61.1391L52.1412 77.5442Z" fill="#002169"/>
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_77_3349">
+                                <rect width="442" height="148" fill="white"/>
+                            </clipPath>
+                        </defs>
+                    </svg>
+                </div>
+        </div>
+        
+        <div class="project-details">
+            <h3>Project Information</h3>
+            <div class="project-detail-grid">
+                <div class="project-detail-item">
+                    <span class="project-detail-label">Project name:</span>
+                    <span class="project-detail-value">{{PROJECT_NAME}}</span>
+                </div>
+                <div class="project-detail-item">
+                    <span class="project-detail-label">Section:</span>
+                    <span class="project-detail-value">{{PROJECT_SECTION}}</span>
+                </div>
+                <div class="project-detail-item">
+                    <span class="project-detail-label">Company:</span>
+                    <span class="project-detail-value">{{PROJECT_COMPANY}}</span>
+                </div>
+                <div class="project-detail-item">
+                    <span class="project-detail-label">Operator:</span>
+                    <span class="project-detail-value">{{PROJECT_OPERATOR}}</span>
+                </div>
+                <div class="project-detail-item">
+                    <span class="project-detail-label">Date:</span>
+                    <span class="project-detail-value">{{PROJECT_DATE}}</span>
+                </div>
+                    <div class="project-detail-item project-detail-remarks">
+                        <span class="project-detail-label">Remarks:</span>
+                        <div class="project-detail-value-remarks">{{PROJECT_REMARKS}}</div>
+                    </div>
+            </div>
+        </div>
+        
+        <div class="info-grid">         
+            <div class="info-section">
+                <h3>Cable parameters as per datasheet</h3>
+                <div class="info-row">
+                    <span class="label">Type:</span>
+                    <span class="value">{{CABLE_TYPE}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Diameter:</span>
+                    <span class="value">{{CABLE_DIAMETER}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Linear mass:</span>
+                    <span class="value">{{CABLE_LINEAR_MASS}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Reel:</span>
+                    <span class="value">{{DEVICE_REEL_NO}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Max pull force:</span>
+                    <span class="value">{{CABLE_MAX_PULL_FORCE}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Installation length:</span>
+                    <span class="value">{{INSTALLATION_LENGTH}}</span>
+                </div>
+            </div>
+
+                        <div class="info-section">
+                <h3>Winch</h3>
+                <div class="info-row">
+                    <span class="label">Type:</span>
+                    <span class="value">{{DEVICE_WINCH}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Lubricant:</span>
+                    <span class="value">{{CABLE_LUBRICANT}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Pushing device:</span>
+                    <span class="value">{{DEVICE_PUSHING}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Machine serial number:</span>
+                    <span class="value">{{DEVICE_SERIAL}}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-section">
+            <h3>Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Trace distance:</span>
+                    <span class="summary-value">{{SUMMARY_LENGTH}}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Laying duration:</span>
+                    <span class="summary-value">{{SUMMARY_DURATION}}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Gps location:</span>
+                    <span class="summary-value">{{SUMMARY_GPS}}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h3>Operation Chart</h3>
+            <div class="chart-container">
+                <canvas style="width: 200px;" id="operationChart"></canvas>
+            </div>
+        </div>
+        <h3 style="font-size: 10pt; color: white; background: #808080; margin-bottom: 8px; margin-top: 20px; padding: 5px; font-weight: bold;">List of highlights (Entire table on the following pages)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Length [m]</th>
+                    <th>Pulling force [daN]</th>
+                    <th>Speed [m/min]</th>
+                    <th>Time - [hh:mm:ss]</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{HIGHLIGHTS_ROWS}}
+            </tbody>
+        </table>
+        <h3 style="font-size: 10pt; color: white; background: #808080; margin-bottom: 8px; padding: 5px; font-weight: bold;">Detailed Measurements</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Length [m]</th>
+                    <th>Pulling force [daN]</th>
+                    <th>Speed [m/min]</th>
+                    <th>Time [hh:mm:ss]</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{MEASUREMENTS_ROWS}}
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        // Chart data from measurements
+        const rawData = {{CHART_DATA}};
+
+        // Prepare data for Chart.js
+        const labels = rawData.map(d => d.length.toFixed(1));
+        const forceData = rawData.map(d => d.pushingForce || d.pullingForce || d.force);
+        const speedData = rawData.map(d => d.speed);
+
+        // Calculate max values for proper scaling
+        const maxForce = Math.max(...forceData.filter(v => v != null && !isNaN(v)));
+        const maxSpeed = Math.max(...speedData.filter(v => v != null && !isNaN(v)));
+        
+        console.log('Max Force:', maxForce, 'Max Speed:', maxSpeed);
+        console.log('Force data:', forceData);
+        console.log('Speed data:', speedData);
+
+        const canvas = document.getElementById('operationChart');
+        const ctx = canvas.getContext('2d');
+
+        function renderFallbackChart() {
+            canvas.width = 700;
+            canvas.height = 200;
+
+            // Handle empty data case
+            if (!rawData || rawData.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const margin = { top: 30, right: 80, bottom: 40, left: 60 };
+            const width = canvas.width - margin.left - margin.right;
+            const height = canvas.height - margin.top - margin.bottom;
+
+            const forceValues = rawData.map(d => d.pushingForce || d.pullingForce);
+            const speedValues = rawData.map(d => d.speed);
+            const lengthValues = rawData.map(d => d.length);
+
+            const maxForce = forceValues.length > 0 ? Math.max(...forceValues) : 1;
+            const maxSpeed = speedValues.length > 0 ? Math.max(...speedValues) : 1;
+            const maxLength = lengthValues.length > 0 ? Math.max(...lengthValues) : 1;
+            const minLength = lengthValues.length > 0 ? Math.min(...lengthValues) : 0;
+            const lengthRange = (maxLength - minLength) || 1;
+
+            // Ensure non-zero divisors for scaling
+            const safeMaxForce = maxForce > 0 ? maxForce : 1;
+            const safeMaxSpeed = maxSpeed > 0 ? maxSpeed : 1;
+
+            const xScale = (val) => margin.left + ((val - minLength) / lengthRange) * width;
+            const yScaleForce = (val) => margin.top + height - (val / safeMaxForce) * height;
+            const yScaleSpeed = (val) => margin.top + height - (val / safeMaxSpeed) * height;
+
+            // Draw grid lines - horizontal
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 5; i++) {
+                const y = margin.top + (i / 5) * height;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(margin.left + width, y);
+                ctx.stroke();
+            }
+            
+            // Draw grid lines - vertical
+            for (let i = 0; i <= 10; i++) {
+                const x = margin.left + (i / 10) * width;
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, margin.top + height);
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+
+            // X axis
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + height);
+            ctx.lineTo(margin.left + width, margin.top + height);
+            ctx.stroke();
+
+            // Y axis left (Force)
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + height);
+            ctx.stroke();
+
+            // Y axis right (Speed)
+            ctx.beginPath();
+            ctx.moveTo(margin.left + width, margin.top);
+            ctx.lineTo(margin.left + width, margin.top + height);
+            ctx.stroke();
+
+            // Draw X axis ticks and labels
+            ctx.fillStyle = '#333';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const xTickCount = Math.min(10, rawData.length);
+            const xStep = Math.floor(rawData.length / xTickCount) || 1;
+            for (let i = 0; i < rawData.length; i += xStep) {
+                const x = xScale(rawData[i].length);
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top + height);
+                ctx.lineTo(x, margin.top + height + 5);
+                ctx.stroke();
+                ctx.fillText(rawData[i].length.toFixed(1), x, margin.top + height + 15);
+            }
+
+            // Draw Y axis ticks and labels (Force - left, red)
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#d32f2f';
+            ctx.font = '10px Arial';
+            for (let i = 0; i <= 5; i++) {
+                const val = (safeMaxForce / 5) * (5 - i);
+                const y = margin.top + (i / 5) * height;
+                ctx.fillText(Math.round(val).toString(), margin.left - 5, y + 3);
+            }
+
+            // Draw Y axis ticks and labels (Speed - right, green)
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#388e3c';
+            ctx.font = '10px Arial';
+            for (let i = 0; i <= 5; i++) {
+                const val = (safeMaxSpeed / 5) * (5 - i);
+                const y = margin.top + (i / 5) * height;
+                ctx.fillText(val.toFixed(1), margin.left + width + 5, y + 3);
+            }
+
+            // Draw force line (red)
+            ctx.strokeStyle = '#d32f2f';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            rawData.forEach((d, i) => {
+                const x = xScale(d.length);
+                const y = yScaleForce(d.pushingForce || d.pullingForce);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw speed line (green)
+            ctx.strokeStyle = '#388e3c';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            rawData.forEach((d, i) => {
+                const x = xScale(d.length);
+                const y = yScaleSpeed(d.speed);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Axis Labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Distance [m]', margin.left + width/2, canvas.height - 5);
+
+            ctx.save();
+            ctx.translate(12, margin.top + height/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillStyle = '#d32f2f';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Pulling force [N]', 0, 0);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(canvas.width - 8, margin.top + height/2);
+            ctx.rotate(Math.PI/2);
+            ctx.fillStyle = '#388e3c';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Speed [m/min]', 0, 0);
+            ctx.restore();
+        }
+
+        // Check if Chart.js is available
+        if (typeof Chart !== 'undefined') {
+            console.log('Rendering chart with Chart.js');
+            
+            // Use Chart.js for advanced chart rendering
+            const chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Pulling force [N]',
+                            data: forceData,
+                            borderColor: '#d32f2f',
+                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0,
+                            yAxisID: 'y',
+                            pointRadius: 0,
+                            pointHoverRadius: 3
+                        },
+                        {
+                            label: 'Speed [m/min]',
+                            data: speedData,
+                            borderColor: '#388e3c',
+                            backgroundColor: 'rgba(56, 142, 60, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0,
+                            yAxisID: 'y1',
+                            pointRadius: 0,
+                            pointHoverRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 0.8,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Distance: ' + context[0].label + ' m';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Distance [m]',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                },
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.15)',
+                                lineWidth: 0.5,
+                                drawBorder: true
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Pulling force [N]',
+                                color: '#d32f2f',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#d32f2f',
+                                font: {
+                                    size: 10
+                                },
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.15)',
+                                lineWidth: 0.5,
+                                drawBorder: true
+                            },
+                            beginAtZero: true,
+                            suggestedMax: Math.ceil(maxForce * 1.1 / 1000) * 1000
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Speed [m/min]',
+                                color: '#388e3c',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#388e3c',
+                                font: {
+                                    size: 10
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            beginAtZero: true,
+                            suggestedMax: Math.ceil(maxSpeed * 1.1)
+                        }
+                    },
+                    animation: false
+                }
+            });
+        } else {
+            console.log('Rendering fallback chart');
+            renderFallbackChart();
+        }
+    </script>
+</body>
+</html>
