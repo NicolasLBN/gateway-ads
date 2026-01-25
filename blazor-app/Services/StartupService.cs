@@ -13,7 +13,7 @@ public class StartupService : IHostedService
         _serviceProvider = serviceProvider;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("StartupService: Generating sample HTML reports...");
         
@@ -27,7 +27,7 @@ public class StartupService : IHostedService
             {
                 try
                 {
-                    htmlReportService.GenerateReport(report);
+                    await Task.Run(() => htmlReportService.GenerateReport(report), cancellationToken).ConfigureAwait(false);
                     _logger.LogInformation($"Generated HTML report for: {report.RecipeName}");
                 }
                 catch (Exception ex)
@@ -42,8 +42,6 @@ public class StartupService : IHostedService
         {
             _logger.LogError(ex, "StartupService: Error generating sample reports");
         }
-        
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
