@@ -138,9 +138,9 @@
 
     @if (showSaveDialog)
     {
-        <div class="modal-overlay" @onclick="() => showSaveDialog = false">
+        <div class="modal-overlay" @onclick="() => showSaveDialog = false" role="dialog" aria-labelledby="save-dialog-title">
             <div class="modal-content" @onclick:stopPropagation="true">
-                <h2>Save Process Recording</h2>
+                <h2 id="save-dialog-title">Save Process Recording</h2>
                 <p>Would you like to save this process recording to the reports?</p>
                 <div class="modal-info">
                     <p><strong>Recipe:</strong> @recipeName</p>
@@ -392,33 +392,7 @@
         try
         {
             showSaveDialog = false;
-            
-            // Get actual process steps from recorded history
-            var processSteps = AppState.GetProcessStepsFromHistory();
-            
-            // Fallback to empty list if no data captured
-            if (processSteps.Count == 0)
-            {
-                error = "No process data captured. Please ensure the process completed successfully.";
-                return;
-            }
-
-            var report = new Report
-            {
-                RecipeName = recipeName,
-                MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
-                Date = DateTime.Now,
-                Products = ingredients.ToList(),
-                Steps = processSteps
-            };
-
-            ReportService.AddReport(report);
-            var fileName = HtmlReportService.GenerateReport(report);
-            
-            success = "Report saved successfully!";
-            
-            await Task.Delay(NAVIGATION_DELAY_MS);
-            Navigation.NavigateTo("/history");
+            await CreateAndSaveReport("Report saved successfully!");
         }
         catch (Exception ex)
         {
@@ -430,37 +404,42 @@
     {
         try
         {
-            // Get actual process steps from recorded history
-            var processSteps = AppState.GetProcessStepsFromHistory();
-            
-            // Fallback to empty list if no data captured
-            if (processSteps.Count == 0)
-            {
-                error = "No process data captured. Please ensure the process completed successfully.";
-                return;
-            }
-
-            var report = new Report
-            {
-                RecipeName = recipeName,
-                MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
-                Date = DateTime.Now,
-                Products = ingredients.ToList(),
-                Steps = processSteps
-            };
-
-            ReportService.AddReport(report);
-            var fileName = HtmlReportService.GenerateReport(report);
-            
-            success = "Report generated successfully!";
-            
-            await Task.Delay(NAVIGATION_DELAY_MS);
-            Navigation.NavigateTo("/history");
+            await CreateAndSaveReport("Report generated successfully!");
         }
         catch (Exception ex)
         {
             error = $"Error generating report: {ex.Message}";
         }
+    }
+
+    private async Task CreateAndSaveReport(string successMessage)
+    {
+        // Get actual process steps from recorded history
+        var processSteps = AppState.GetProcessStepsFromHistory();
+        
+        // Fallback to empty list if no data captured
+        if (processSteps.Count == 0)
+        {
+            error = "No process data captured. Please ensure the process completed successfully.";
+            return;
+        }
+
+        var report = new Report
+        {
+            RecipeName = recipeName,
+            MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
+            Date = DateTime.Now,
+            Products = ingredients.ToList(),
+            Steps = processSteps
+        };
+
+        ReportService.AddReport(report);
+        var fileName = HtmlReportService.GenerateReport(report);
+        
+        success = successMessage;
+        
+        await Task.Delay(NAVIGATION_DELAY_MS);
+        Navigation.NavigateTo("/history");
     }
 
     public void Dispose()
