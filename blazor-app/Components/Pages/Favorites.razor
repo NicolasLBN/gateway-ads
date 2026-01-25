@@ -3,8 +3,8 @@
 @using BlazorApp.Models
 @using BlazorApp.Services
 @inject FavoritesService FavoritesService
-@inject AuthService AuthService
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+
 
 <PageTitle>Favorites</PageTitle>
 
@@ -176,12 +176,6 @@
 
     protected override void OnInitialized()
     {
-        if (!AuthService.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
         LoadFavorites();
         FavoritesService.OnFavoritesChanged += LoadFavorites;
     }
@@ -267,7 +261,7 @@
 
     private void UseFavorite(int id)
     {
-        Navigation.NavigateTo($"/new-recipe?favoriteId={id}");
+        NavigationManager.NavigateTo($"/new-recipe?favoriteId={id}");
     }
 
     public void Dispose()

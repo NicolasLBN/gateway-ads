@@ -12,7 +12,7 @@ public class AdsService : IDisposable
     private AdsClient? _adsClient;
     private readonly ILogger<AdsService> _logger;
     private bool _isConnected;
-    private string _amsNetId = "127.0.0.1.1.1";
+    private string _amsNetId = "199.4.42.250.1.1";
     private int _amsPort = 851;
 
     public event EventHandler<MachineStatus>? MachineStatusUpdated;
@@ -34,10 +34,14 @@ public class AdsService : IDisposable
 
             _adsClient?.Dispose();
             _adsClient = new AdsClient();
+
+            Console.WriteLine($"+++ICI1 {_amsNetId}:{_amsPort}+++");
             
             await Task.Run(() => _adsClient.Connect(_amsNetId, _amsPort));
             
             _isConnected = _adsClient.IsConnected;
+
+            Console.WriteLine($"+++ICI2 is connected {_isConnected}+++");
             
             if (_isConnected)
             {

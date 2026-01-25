@@ -1,8 +1,6 @@
 @page "/"
 @rendermode InteractiveServer
 @using BlazorApp.Services
-@inject AuthService AuthService
-@inject NavigationManager Navigation
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -37,13 +35,6 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
-    {
-        if (!AuthService.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-        }
-    }
 }
 
 <style>
