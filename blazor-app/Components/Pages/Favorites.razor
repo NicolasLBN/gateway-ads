@@ -87,17 +87,6 @@
                     <input type="text" class="form-control" @bind="modalRecipe.Name" placeholder="Enter recipe name" />
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Volume (L)</label>
-                        <input type="number" class="form-control" @bind="modalRecipe.PreparationVolume" step="0.1" />
-                    </div>
-                    <div class="form-group">
-                        <label>Concentration (mol/L)</label>
-                        <input type="number" class="form-control" @bind="modalRecipe.PreparationConcentration" step="0.01" />
-                    </div>
-                </div>
-
                 <h3>Chemical Components</h3>
                 
                 @foreach (var (ingredient, index) in modalRecipe.Ingredients.Select((ing, idx) => (ing, idx)))
@@ -117,10 +106,6 @@
                         </div>
                         
                         <div class="ingredient-fields">
-                            <div class="form-group">
-                                <label>Quantity (g)</label>
-                                <input type="number" class="form-control-sm" @bind="ingredient.Quantity" step="0.01" />
-                            </div>
                             <div class="form-group">
                                 <label>Volume (mL)</label>
                                 <input type="number" class="form-control-sm" @bind="ingredient.Volume" step="0.1" />
