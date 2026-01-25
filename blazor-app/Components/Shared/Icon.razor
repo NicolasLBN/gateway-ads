@@ -151,11 +151,35 @@ else if (Name == "printer")
         <rect x="6" y="14" width="12" height="8"></rect>
     </svg>
 }
+else
+{
+    @* Fallback icon for unknown icon names *@
+    <svg xmlns="http://www.w3.org/2000/svg" width="@Size" height="@Size" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+}
 
 @code {
+    /// <summary>
+    /// The name of the icon to display.
+    /// Supported icons: home, plus, star, list, settings, tool, logout, warning, check, clock, flask, 
+    /// play, download, file, trash, save, refresh, x, send, printer
+    /// </summary>
     [Parameter]
     public string Name { get; set; } = "home";
 
+    /// <summary>
+    /// The size of the icon in pixels. Must be between 8 and 128.
+    /// </summary>
     [Parameter]
     public int Size { get; set; } = 20;
+
+    protected override void OnParametersSet()
+    {
+        // Validate Size parameter
+        if (Size < 8) Size = 8;
+        if (Size > 128) Size = 128;
+    }
 }
