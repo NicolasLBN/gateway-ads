@@ -10,11 +10,11 @@ VAR
     RandomValue : DINT;
 END_VAR
 
-// Durée de chaque étape
+// Durée de chaque étape (Total: 30s)
 VAR CONSTANT
-    T_PREPARE : TIME := T#5s;
-    T_DOSE_A : TIME := T#7s;
-    T_DOSE_B : TIME := T#7s;
+    T_PREPARE : TIME := T#3s;
+    T_DOSE_A : TIME := T#5s;
+    T_DOSE_B : TIME := T#5s;
     T_MIX : TIME := T#10s;
     T_VERIFY : TIME := T#4s;
     T_FINALIZE : TIME := T#3s;
