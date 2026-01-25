@@ -6,21 +6,13 @@ public class ReportService
 {
     private readonly List<Report> _reports = new();
     private readonly ILogger<ReportService> _logger;
-    private readonly HtmlReportService? _htmlReportService;
 
-    public ReportService(ILogger<ReportService> logger, IServiceProvider serviceProvider)
+    public ReportService(ILogger<ReportService> logger)
     {
         _logger = logger;
         
         // Add some sample reports
         AddSampleReports();
-        
-        // Try to get HtmlReportService and generate reports
-        _htmlReportService = serviceProvider.GetService<HtmlReportService>();
-        if (_htmlReportService != null)
-        {
-            GenerateSampleReports();
-        }
     }
 
     public List<Report> GetReports()
@@ -91,24 +83,5 @@ public class ReportService
                 new() { Name = "Quality Control", Time = 120, Temp = 22.0, Pressure = 1.0, Speed = 0, Remark = "OK" }
             }
         });
-    }
-    
-    private void GenerateSampleReports()
-    {
-        if (_htmlReportService == null)
-            return;
-            
-        foreach (var report in _reports)
-        {
-            try
-            {
-                _htmlReportService.GenerateReport(report);
-                _logger.LogInformation($"Generated HTML report for: {report.RecipeName}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Failed to generate HTML report for: {report.RecipeName}");
-            }
-        }
     }
 }
