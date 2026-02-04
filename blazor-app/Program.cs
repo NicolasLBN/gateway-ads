@@ -13,6 +13,7 @@ builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<MachineService>();
 builder.Services.AddSingleton<ReportService>();
 builder.Services.AddSingleton<HtmlReportService>();
+builder.Services.AddSingleton<PythonPdfService>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<FavoritesService>();
 
