@@ -35,6 +35,7 @@ public partial class App : Application
         services.AddSingleton<MachineService>();
         services.AddSingleton<PlcPollingService>();
         services.AddSingleton<PythonReportService>();
+        services.AddSingleton<FavoritesService>();
 
         // Add ViewModels
         services.AddTransient<MainWindowViewModel>();
@@ -47,6 +48,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Get the MainWindow from DI - it will be constructed with all its dependencies
         var mainWindow = _serviceProvider?.GetRequiredService<MainWindow>();
         mainWindow?.Show();
     }
