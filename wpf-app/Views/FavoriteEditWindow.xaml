@@ -1,0 +1,104 @@
+<Window x:Class="WpfApp.Views.FavoriteEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add Favorite Recipe" Height="550" Width="600"
+        WindowStartupLocation="CenterOwner">
+    
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#228be6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1c7ed6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#e9ecef"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#dee2e6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Form -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Recipe Name" FontWeight="Bold" Margin="0,0,0,5"/>
+            <TextBox x:Name="NameTextBox" Height="32" FontSize="14" Padding="8"/>
+            
+            <Grid Margin="0,15,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                    <TextBlock Text="Volume (L)" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="VolumeTextBox" Height="32" FontSize="14" Padding="8" Text="1.0"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                    <TextBlock Text="Concentration (mol/L)" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="ConcentrationTextBox" Height="32" FontSize="14" Padding="8" Text="0.1"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+        
+        <!-- Ingredients -->
+        <GroupBox Grid.Row="1" Header="Chemical Components" Margin="0,15,0,0" Padding="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="IngredientsPanel"/>
+                </ScrollViewer>
+                
+                <Button Grid.Row="1" Content="➕ Add Component" 
+                        Click="AddIngredient_Click" 
+                        HorizontalAlignment="Left"
+                        Margin="0,10,0,0"/>
+            </Grid>
+        </GroupBox>
+        
+        <!-- Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="Cancel" 
+                    Style="{StaticResource SecondaryButton}"
+                    Click="Cancel_Click"
+                    Width="100"/>
+            <Button Content="Save" 
+                    Click="Save_Click"
+                    Width="100"/>
+        </StackPanel>
+    </Grid>
+</Window>

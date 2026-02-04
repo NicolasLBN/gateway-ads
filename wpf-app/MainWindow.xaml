@@ -191,7 +191,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <StackPanel Grid.Row="0" Margin="10">
@@ -209,6 +209,11 @@
                                     <Run Text="{Binding ProcessStatus.Progress, StringFormat='{}{0:P0}'}"/>
                                 </TextBlock>
                             </StackPanel>
+                            
+                            <!-- Real-time Charts -->
+                            <GroupBox Grid.Row="2" Header="Real-time Machine Data" Margin="10,10,10,0">
+                                <Grid x:Name="ChartsContainer" Height="200"/>
+                            </GroupBox>
                         </Grid>
                     </GroupBox>
                 </Grid>
@@ -219,27 +224,56 @@
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     
                     <!-- Recipe Form -->
                     <GroupBox Header="New Recipe" Grid.Row="0">
-                        <StackPanel>
-                            <TextBlock Text="Recipe Name" FontWeight="Bold" Margin="5"/>
-                            <TextBox Text="{Binding CurrentRecipe.Name}" Height="30" Margin="5" FontSize="14"/>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             
-                            <TextBlock Text="Preparation Volume (ml)" FontWeight="Bold" Margin="5,10,5,5"/>
-                            <TextBox Text="{Binding CurrentRecipe.PreparationVolume}" Height="30" Margin="5" FontSize="14"/>
+                            <StackPanel Grid.Row="0">
+                                <TextBlock Text="Recipe Name" FontWeight="Bold" Margin="5"/>
+                                <TextBox Text="{Binding CurrentRecipe.Name}" Height="30" Margin="5" FontSize="14"/>
+                                
+                                <TextBlock Text="Preparation Volume (L)" FontWeight="Bold" Margin="5,10,5,5"/>
+                                <TextBox Text="{Binding CurrentRecipe.PreparationVolume}" Height="30" Margin="5" FontSize="14"/>
+                                
+                                <TextBlock Text="Preparation Concentration (mol/L)" FontWeight="Bold" Margin="5,10,5,5"/>
+                                <TextBox Text="{Binding CurrentRecipe.PreparationConcentration}" Height="30" Margin="5" FontSize="14"/>
+                            </StackPanel>
                             
-                            <TextBlock Text="Preparation Concentration" FontWeight="Bold" Margin="5,10,5,5"/>
-                            <TextBox Text="{Binding CurrentRecipe.PreparationConcentration}" Height="30" Margin="5" FontSize="14"/>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5,10,5,5">
+                                <Button Content="⭐ Load from Favorites" 
+                                        Click="LoadFavorite_Click"
+                                        Width="160"
+                                        Background="#f59f00"
+                                        Margin="0,0,5,0"/>
+                                <Button Content="💾 Save as Favorite" 
+                                        Click="SaveAsFavorite_Click"
+                                        Width="160"
+                                        Background="#20c997"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <!-- Favorites Section -->
+                    <GroupBox Header="Favorite Recipes" Grid.Row="1" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+                            <Button Content="📋 Manage Favorites" 
+                                    Click="ManageFavorites_Click"
+                                    Width="160"/>
                         </StackPanel>
                     </GroupBox>
                     
                     <!-- Ingredients List -->
-                    <GroupBox Header="Ingredients" Grid.Row="1" Margin="0,10,0,0">
-                        <TextBlock Text="Ingredients management - Add ingredients functionality here" 
+                    <GroupBox Header="Ingredients" Grid.Row="2" Margin="0,10,0,0">
+                        <TextBlock Text="Recipe ingredients will appear here" 
                                    VerticalAlignment="Center" 
                                    HorizontalAlignment="Center"
                                    FontSize="14"
@@ -247,7 +281,7 @@
                     </GroupBox>
                     
                     <!-- Actions -->
-                    <GroupBox Header="Actions" Grid.Row="2" Margin="0,10,0,0">
+                    <GroupBox Header="Actions" Grid.Row="3" Margin="0,10,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button Content="Send Recipe to PLC" 
                                     Command="{Binding SendRecipeCommand}"
