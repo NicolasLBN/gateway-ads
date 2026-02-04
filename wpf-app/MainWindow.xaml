@@ -1,0 +1,287 @@
+﻿<Window x:Class="WpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp"
+        xmlns:converters="clr-namespace:WpfApp.Converters"
+        mc:Ignorable="d"
+        Title="Gateway ADS - WPF Application" Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <!-- Converters -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        
+        <!-- Styles -->
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#2a75bb"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#2a75bb"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#3d8fd1"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#cccccc"/>
+                    <Setter Property="Foreground" Value="#666666"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#dc3545"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#c82333"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#28a745"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#218838"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1a5490" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Gateway ADS - WPF Application" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="White"/>
+                    <TextBlock Text="Industrial Recipe Management and PLC Control" 
+                               FontSize="12" 
+                               Foreground="#e0e0e0"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusMessage}" 
+                               Foreground="White" 
+                               FontSize="14" 
+                               FontWeight="Bold"
+                               HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" Margin="10">
+            <!-- Machine Connection Tab -->
+            <TabItem Header="Machine Connection">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Machine Selection -->
+                    <GroupBox Header="Machine Selection" Grid.Row="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <ComboBox Grid.Column="0" 
+                                      ItemsSource="{Binding Machines}" 
+                                      SelectedItem="{Binding SelectedMachine}"
+                                      DisplayMemberPath="Name"
+                                      VerticalContentAlignment="Center"
+                                      Height="35"
+                                      FontSize="14"
+                                      Margin="5"
+                                      IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBoolConverter}}"/>
+                            
+                            <Button Grid.Column="1" 
+                                    Content="Connect" 
+                                    Command="{Binding ConnectCommand}"
+                                    Style="{StaticResource SuccessButton}"
+                                    Width="120"/>
+                            
+                            <Button Grid.Column="2" 
+                                    Content="Disconnect" 
+                                    Command="{Binding DisconnectCommand}"
+                                    Style="{StaticResource DangerButton}"
+                                    Width="120"/>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <!-- Machine Status -->
+                    <GroupBox Header="Machine Status" Grid.Row="1" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Margin="10">
+                                <TextBlock Text="Motor Temperature" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock FontSize="24" Margin="0,5">
+                                    <Run Text="{Binding MachineStatus.MotorTemperature, StringFormat='{}{0:F1}'}"/>
+                                    <Run Text="°C" FontSize="18"/>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="1" Margin="10">
+                                <TextBlock Text="Oil Pressure" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock FontSize="24" Margin="0,5">
+                                    <Run Text="{Binding MachineStatus.OilPressure, StringFormat='{}{0:F2}'}"/>
+                                    <Run Text="bar" FontSize="18"/>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="2" Margin="10">
+                                <TextBlock Text="Motor Speed" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock FontSize="24" Margin="0,5">
+                                    <Run Text="{Binding MachineStatus.MotorSpeed, StringFormat='{}{0:F0}'}"/>
+                                    <Run Text="RPM" FontSize="18"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <!-- Process Status -->
+                    <GroupBox Header="Process Status" Grid.Row="2" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisConverter}}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <StackPanel Grid.Row="0" Margin="10">
+                                <TextBlock Text="Current Step" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock Text="{Binding ProcessStatus.StepName}" FontSize="18" Margin="0,5"/>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Row="1" Margin="10">
+                                <TextBlock Text="Overall Progress" FontWeight="Bold" FontSize="12"/>
+                                <ProgressBar Height="30" 
+                                             Value="{Binding ProcessStatus.Progress}" 
+                                             Maximum="1"
+                                             Margin="0,5"/>
+                                <TextBlock HorizontalAlignment="Center">
+                                    <Run Text="{Binding ProcessStatus.Progress, StringFormat='{}{0:P0}'}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            
+            <!-- Recipe Management Tab -->
+            <TabItem Header="Recipe Management">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Recipe Form -->
+                    <GroupBox Header="New Recipe" Grid.Row="0">
+                        <StackPanel>
+                            <TextBlock Text="Recipe Name" FontWeight="Bold" Margin="5"/>
+                            <TextBox Text="{Binding CurrentRecipe.Name}" Height="30" Margin="5" FontSize="14"/>
+                            
+                            <TextBlock Text="Preparation Volume (ml)" FontWeight="Bold" Margin="5,10,5,5"/>
+                            <TextBox Text="{Binding CurrentRecipe.PreparationVolume}" Height="30" Margin="5" FontSize="14"/>
+                            
+                            <TextBlock Text="Preparation Concentration" FontWeight="Bold" Margin="5,10,5,5"/>
+                            <TextBox Text="{Binding CurrentRecipe.PreparationConcentration}" Height="30" Margin="5" FontSize="14"/>
+                        </StackPanel>
+                    </GroupBox>
+                    
+                    <!-- Ingredients List -->
+                    <GroupBox Header="Ingredients" Grid.Row="1" Margin="0,10,0,0">
+                        <TextBlock Text="Ingredients management - Add ingredients functionality here" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="14"
+                                   Foreground="Gray"/>
+                    </GroupBox>
+                    
+                    <!-- Actions -->
+                    <GroupBox Header="Actions" Grid.Row="2" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="Send Recipe to PLC" 
+                                    Command="{Binding SendRecipeCommand}"
+                                    Width="150"
+                                    Style="{StaticResource SuccessButton}"/>
+                            <Button Content="Start Process" 
+                                    Command="{Binding StartProcessCommand}"
+                                    Width="150"/>
+                            <Button Content="Reset Process" 
+                                    Command="{Binding ResetProcessCommand}"
+                                    Width="150"
+                                    Style="{StaticResource DangerButton}"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            
+            <!-- History Tab -->
+            <TabItem Header="History">
+                <Grid Margin="10">
+                    <TextBlock Text="Recipe history and reports - Coming soon" 
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Center"
+                               FontSize="16"
+                               Foreground="Gray"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#f0f0f0" Padding="10" BorderBrush="#cccccc" BorderThickness="0,1,0,0">
+            <TextBlock Text="Gateway ADS WPF Application - Industrial Automation with Python Reports" 
+                       HorizontalAlignment="Center" 
+                       Foreground="#666666"/>
+        </Border>
+    </Grid>
+</Window>
