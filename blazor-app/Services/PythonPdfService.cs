@@ -83,7 +83,7 @@ public class PythonPdfService
             }
             else
             {
-                throw new Exception("Python script failed to generate PDF");
+                throw new Exception("Python script failed to generate PDF. Please ensure Python and reportlab are installed.");
             }
         }
         catch (Exception ex)
@@ -119,7 +119,7 @@ public class PythonPdfService
             using var process = Process.Start(processInfo);
             if (process == null)
             {
-                _logger.LogError("Failed to start Python process");
+                _logger.LogError($"Failed to start Python process. Command: {pythonCommand} {processInfo.Arguments}");
                 return false;
             }
 
@@ -130,7 +130,7 @@ public class PythonPdfService
 
             if (process.ExitCode != 0)
             {
-                _logger.LogError($"Python script error: {error}");
+                _logger.LogError($"Python script error (exit code {process.ExitCode}): {error}");
                 return false;
             }
 
