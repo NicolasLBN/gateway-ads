@@ -2,19 +2,39 @@
 
 Complete industrial application for recipe management, PLC control via ADS, and real-time monitoring.
 
-## ✨ New: Blazor .NET Version Available!
+## ✨ Multiple Implementations Available!
 
-This repository now includes a **Blazor Server** implementation alongside the original React/Node.js version. The Blazor version is a complete rewrite in C# with .NET 10, offering:
+This repository includes **three implementations** of the same industrial application:
 
-- ✅ Single integrated application (no separate frontend/backend)
+### 1. **WPF .NET Application** (New! 🎉)
+- ✅ Native Windows desktop application
+- ✅ MVVM architecture with dependency injection
+- ✅ Native ADS communication using `Beckhoff.TwinCAT.Ads` library
+- ✅ Real-time PLC monitoring with background polling
+- ✅ **Python-based PDF report generation** using ReportLab
+- ✅ Professional industrial UI
+- 📁 See [`/wpf-app/README.md`](./wpf-app/README.md)
+- 🚀 See [`/wpf-app/QUICKSTART.md`](./wpf-app/QUICKSTART.md)
+
+### 2. **Blazor Server Application**
+- ✅ Single integrated web application (no separate frontend/backend)
 - ✅ Native ADS communication using `Beckhoff.TwinCAT.Ads` library
 - ✅ Modern industrial UI with real-time updates
-- ✅ PDF generation using QuestPDF
+- ✅ PDF generation using QuestPDF (C#)
 - ✅ All original features migrated
+- 📁 See [`/blazor-app/README.md`](./blazor-app/README.md)
 
-**Choose your version:**
-- **Blazor/.NET** (recommended) - See [`/blazor-app/README.md`](./blazor-app/README.md)
-- **React/Node.js** (original) - See instructions below
+### 3. **React/Node.js Application** (Original)
+- ✅ Modern web interface with React
+- ✅ Node.js backend with Express
+- ✅ WebSocket real-time communication
+- ✅ node-ads for PLC communication
+- 📁 See instructions below
+
+**Choose based on your needs:**
+- **WPF** - Best for Windows desktop deployments with Python integration
+- **Blazor** - Best for web deployments with pure C#/.NET stack
+- **React/Node.js** - Best for cross-platform web with JavaScript/TypeScript
 
 ---
 
@@ -29,9 +49,22 @@ This repository now includes a **Blazor Server** implementation alongside the or
 
 ## 🏗️ Architecture
 
-### Blazor Version (New)
+### WPF Version (New)
 ```
-/blazor-app        - Blazor Server application (.NET 10)
+/wpf-app            - WPF desktop application (.NET 8)
+  /Models           - Data models (Recipe, Machine, MachineStatus, etc.)
+  /Services         - Business logic and PLC communication (ADS)
+  /ViewModels       - MVVM ViewModels with INotifyPropertyChanged
+  /Converters       - Value converters for XAML binding
+  /Views            - WPF user controls and windows
+  /Python           - Python scripts for PDF generation (ReportLab)
+  MainWindow.xaml   - Main application window
+  App.xaml          - Application entry point
+```
+
+### Blazor Version
+```
+/blazor-app        - Blazor Server application (.NET 8)
   /Components
     /Layout       - Application layout and navigation
     /Pages        - Main pages (Home, NewRecipe, History, MachineSettings)
@@ -39,10 +72,47 @@ This repository now includes a **Blazor Server** implementation alongside the or
   /Services       - Business logic and PLC communication (ADS)
   /Models         - Data models
   /wwwroot        - Static files and generated reports
-/plc-simulator    - TwinCAT 3 PLC program
 ```
 
 ### React/Node.js Version (Original)
+```
+/frontend          - React.js application
+  /src
+    /components    - Reusable UI components
+    /pages         - Page components (Home, NewRecipe, History)
+    /hooks         - Custom hooks (Zustand store, WebSocket)
+    /services      - API and WebSocket services
+/backend           - Node.js/Express server
+  /routes          - API routes
+  /ads             - ADS client for PLC communication
+  /pdf             - PDF generation
+  /ws              - WebSocket server
+```
+
+### PLC Simulator (Common)
+```
+/plc-simulator     - TwinCAT 3 PLC program
+  /GVLs            - Global Variable Lists
+  /POUs            - Program Organization Units
+  /Tasks           - Task configuration
+```
+
+## 🛠️ Technologies
+
+### WPF Version
+- **.NET 8** - Framework
+- **WPF** - Windows Presentation Foundation
+- **Beckhoff.TwinCAT.Ads** - ADS communication
+- **Python + ReportLab** - PDF generation
+- **MVVM Pattern** - Architecture
+- **Dependency Injection** - Service management
+
+### Blazor Version
+- **.NET 8** - Framework
+- **Blazor Server** - Interactive web UI
+- **Beckhoff.TwinCAT.Ads** - ADS communication
+- **QuestPDF** - PDF generation
+- **C#** - Programming language
 ```
 /frontend          - React.js application
   /src
