@@ -110,6 +110,9 @@ public partial class FavoriteEditWindow : Window
 
 public class IngredientControl : Border
 {
+    private const double DEFAULT_VOLUME_ML = 100.0;
+    private const double DEFAULT_MOLAR_MASS_G_MOL = 100.0;
+    
     private readonly TextBox _nameTextBox;
     private readonly TextBox _volumeTextBox;
     private readonly TextBox _molarMassTextBox;
@@ -175,14 +178,14 @@ public class IngredientControl : Border
 
         var volumeStack = new StackPanel();
         volumeStack.Children.Add(new TextBlock { Text = "Volume (mL)", FontWeight = FontWeights.SemiBold, FontSize = 12, Margin = new Thickness(0, 0, 0, 4) });
-        _volumeTextBox = new TextBox { Height = 28, Padding = new Thickness(6), FontSize = 13, Text = "100" };
+        _volumeTextBox = new TextBox { Height = 28, Padding = new Thickness(6), FontSize = 13, Text = DEFAULT_VOLUME_ML.ToString() };
         volumeStack.Children.Add(_volumeTextBox);
         Grid.SetColumn(volumeStack, 0);
         fieldsGrid.Children.Add(volumeStack);
 
         var molarMassStack = new StackPanel();
         molarMassStack.Children.Add(new TextBlock { Text = "Molar Mass (g/mol)", FontWeight = FontWeights.SemiBold, FontSize = 12, Margin = new Thickness(0, 0, 0, 4) });
-        _molarMassTextBox = new TextBox { Height = 28, Padding = new Thickness(6), FontSize = 13, Text = "100" };
+        _molarMassTextBox = new TextBox { Height = 28, Padding = new Thickness(6), FontSize = 13, Text = DEFAULT_MOLAR_MASS_G_MOL.ToString() };
         molarMassStack.Children.Add(_molarMassTextBox);
         Grid.SetColumn(molarMassStack, 2);
         fieldsGrid.Children.Add(molarMassStack);

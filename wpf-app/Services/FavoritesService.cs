@@ -169,6 +169,6 @@ public class FavoritesService : IDisposable
 
     public void Dispose()
     {
-        _db?.Dispose();
+        _db.Dispose();
     }
 }
