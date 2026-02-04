@@ -2,34 +2,54 @@
 
 A Windows Presentation Foundation (WPF) application for industrial recipe management and PLC control via ADS protocol, with Python-based PDF report generation.
 
+## ✨ New Features (Latest Update)
+
+- **Favorites Management System** 🌟
+  - Create and manage favorite recipes
+  - 3 pre-existing favorite recipes included
+  - Quick-load recipes from favorites
+  - Save current recipes as favorites
+  - Persistent storage using LiteDB
+
+- **Real-time Data Visualization** 📊
+  - Live charts for Temperature, Pressure, and Speed
+  - Automatic updates when connected to PLC
+  - Professional charting using LiveCharts2
+  - Up to 50 data points per chart
+
+For detailed information, see [FEATURES_DOCUMENTATION.md](./FEATURES_DOCUMENTATION.md)
+
 ## Overview
 
 This WPF application is based on the existing Blazor application functionality and provides:
 - Real-time PLC communication via TwinCAT ADS protocol
-- Recipe management and process control
-- Machine status monitoring
+- Recipe management and process control with favorites
+- Machine status monitoring with real-time charts
 - Python-based PDF report generation using ReportLab
 
 ## Architecture
 
 ```
 /wpf-app
-  /Models           - Data models (Recipe, Machine, MachineStatus, ProcessStatus, Report)
+  /Models           - Data models (Recipe, Machine, MachineStatus, ProcessStatus, Report, FavoriteRecipe)
   /Services         - Business logic and PLC communication
     - AdsService.cs             - TwinCAT ADS communication
     - AppStateService.cs        - Application state management
     - MachineService.cs         - Machine configuration
     - PlcPollingService.cs      - Background PLC polling
     - PythonReportService.cs    - Python script integration for PDF reports
+    - FavoritesService.cs       - Favorites management with LiteDB
   /ViewModels       - MVVM ViewModels
     - MainWindowViewModel.cs    - Main window logic
     - RelayCommand.cs           - Command implementation
   /Converters       - Value converters for XAML binding
   /Views            - WPF user controls and windows
+    - FavoritesWindow.xaml      - Favorites management UI
+    - FavoriteEditWindow.xaml   - Add/Edit favorite recipes
   /Python           - Python scripts for report generation
     - generate_report.py        - PDF generation script
     - requirements.txt          - Python dependencies
-  MainWindow.xaml   - Main application window
+  MainWindow.xaml   - Main application window (with charts and favorites)
   App.xaml          - Application entry point
 ```
 
@@ -39,6 +59,8 @@ This WPF application is based on the existing Blazor application functionality a
 - **.NET 8** - Framework
 - **WPF** - Windows Presentation Foundation UI
 - **Beckhoff.TwinCAT.Ads** (v6.1.203) - ADS communication with TwinCAT PLC
+- **LiteDB** (v5.0.17) - Embedded database for favorites
+- **LiveChartsCore.SkiaSharpView.WPF** (v2.0.0-rc2) - Real-time charting
 - **Microsoft.Extensions.DependencyInjection** - Dependency injection
 - **Microsoft.Extensions.Logging** - Logging
 - **Newtonsoft.Json** - JSON serialization

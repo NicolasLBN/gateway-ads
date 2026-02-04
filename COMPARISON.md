@@ -190,11 +190,12 @@ This means you can:
 | Recipe Creation | ✅ | ✅ | ✅ |
 | Process Control | ✅ | ✅ | ✅ |
 | Real-time Monitoring | ✅ | ✅ | ✅ |
+| Real-time Charts | ✅ | ✅ | ✅ |
 | PDF Reports | ✅ (Python) | ✅ (C#) | ✅ (Puppeteer) |
 | History View | 🚧 Planned | ✅ | ✅ |
 | Multi-Machine Support | ✅ | ✅ | ✅ |
 | Authentication | 🚧 Planned | ✅ | ❌ |
-| Favorites | 🚧 Planned | ✅ | ❌ |
+| Favorites | ✅ | ✅ | ❌ |
 
 Legend:
 - ✅ Implemented
