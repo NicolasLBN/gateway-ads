@@ -3,6 +3,7 @@
 @using BlazorApp.Models
 @using BlazorApp.Services
 @inject ReportService ReportService
+@inject PythonPdfService PythonPdfService
 @inject NavigationManager Navigation
 
 <PageTitle>Recipe History</PageTitle>
@@ -12,6 +13,14 @@
         <h1 class="page-title">Recipe History</h1>
         <a href="/" class="btn-back">← Back to Home</a>
     </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+            <button class="alert-close" @onclick="() => errorMessage = string.Empty">×</button>
+        </div>
+    }
 
     @if (reports.Count == 0)
     {
@@ -46,9 +55,22 @@
                         </div>
                     </div>
 
-                    <button class="btn-download" @onclick="() => DownloadReport(report.Id)">
-                        <Icon Name="download" Size="16" /> View Report
-                    </button>
+                    <div class="card-actions">
+                        <button class="btn-download" @onclick="() => ViewHtmlReport(report.Id)">
+                            <Icon Name="file" Size="16" /> View HTML Report
+                        </button>
+                        <button class="btn-download btn-pdf" @onclick="() => DownloadPdfReport(report.Id)" disabled="@generatingPdf">
+                            <Icon Name="download" Size="16" /> 
+                            @if (generatingPdf && currentReportId == report.Id)
+                            {
+                                <span>Generating PDF...</span>
+                            }
+                            else
+                            {
+                                <span>Download PDF</span>
+                            }
+                        </button>
+                    </div>
                 </div>
             }
         </div>
@@ -57,6 +79,9 @@
 
 @code {
     private List<Report> reports = new();
+    private bool generatingPdf = false;
+    private string currentReportId = "";
+    private string errorMessage = "";
 
     protected override void OnInitialized()
     {
@@ -68,10 +93,50 @@
         reports = ReportService.GetReports();
     }
 
-    private void DownloadReport(string reportId)
+    private void ViewHtmlReport(string reportId)
     {
         // Navigate to the static HTML report file
         Navigation.NavigateTo($"/reports/report_{reportId}.html", forceLoad: true);
+    }
+
+    private async Task DownloadPdfReport(string reportId)
+    {
+        try
+        {
+            generatingPdf = true;
+            currentReportId = reportId;
+            errorMessage = "";
+            StateHasChanged();
+
+            // Find the report
+            var report = reports.FirstOrDefault(r => r.Id == reportId);
+            if (report == null)
+            {
+                errorMessage = "Report not found";
+                return;
+            }
+
+            // Check if PDF already exists
+            var pdfFileName = $"report_{reportId}.pdf";
+            if (!PythonPdfService.ReportExists(pdfFileName))
+            {
+                // Generate PDF using Python script
+                await PythonPdfService.GenerateReportAsync(report);
+            }
+
+            // Download the PDF
+            Navigation.NavigateTo($"/reports/{pdfFileName}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error generating PDF: {ex.Message}";
+        }
+        finally
+        {
+            generatingPdf = false;
+            currentReportId = "";
+            StateHasChanged();
+        }
     }
 }
 
@@ -106,6 +171,37 @@
 
     .btn-back:hover {
         background-color: #4fb828;
+    }
+
+    .alert {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+    }
+
+    .alert-danger {
+        background-color: #ffe3e3;
+        color: #c92a2a;
+        border: 1px solid #ffa8a8;
+    }
+
+    .alert-close {
+        background: none;
+        border: none;
+        color: #c92a2a;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 10px;
+        line-height: 1;
+    }
+
+    .alert-close:hover {
+        opacity: 0.7;
     }
 
     .empty-state {
@@ -194,6 +290,12 @@
         color: #868e96;
     }
 
+    .card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .btn-download {
         width: 100%;
         padding: 12px;
@@ -205,9 +307,26 @@
         font-size: 14px;
         font-weight: 500;
         transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
-    .btn-download:hover {
+    .btn-download:hover:not(:disabled) {
         background-color: #1c7ed6;
+    }
+
+    .btn-download:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-pdf {
+        background-color: #37b24d;
+    }
+
+    .btn-pdf:hover:not(:disabled) {
+        background-color: #2f9e44;
     }
 </style>
