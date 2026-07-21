@@ -57,6 +57,36 @@
             </button>
         }
     </div>
+
+    <div class="manual-connect">
+        <h4>Or enter an AMS Net ID directly</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label>AMS Net ID</label>
+                <input type="text" class="form-control" @bind="manualAmsNetId" placeholder="e.g. 127.0.0.1.1.1"
+                       disabled="@(isConnecting || AppState.IsConnected)" />
+            </div>
+            <div class="form-group form-group-port">
+                <label>Port</label>
+                <input type="number" class="form-control" @bind="manualAmsPort"
+                       disabled="@(isConnecting || AppState.IsConnected)" />
+            </div>
+        </div>
+
+        @if (!AppState.IsConnected)
+        {
+            <button class="btn btn-primary" @onclick="ConnectManual" disabled="@(string.IsNullOrWhiteSpace(manualAmsNetId) || isConnecting)">
+                @if (isConnecting)
+                {
+                    <span>Connecting...</span>
+                }
+                else
+                {
+                    <span>Connect to this AMS Net ID</span>
+                }
+            </button>
+        }
+    </div>
 </div>
 
 @code {
@@ -64,6 +94,8 @@
     private Machine? selectedMachine;
     private bool isConnecting;
     private string? error;
+    private string manualAmsNetId = "127.0.0.1.1.1";
+    private int manualAmsPort = 851;
 
     protected override void OnInitialized()
     {
@@ -103,6 +135,44 @@
             var success = await AdsService.ConnectAsync(selectedMachine.AmsNetId, selectedMachine.AmsPort);
             
             if (!success)
+            {
+                error = "Failed to connect to PLC. Please check that TwinCAT is running.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Connection error: {ex.Message}";
+        }
+        finally
+        {
+            isConnecting = false;
+        }
+    }
+
+    private async Task ConnectManual()
+    {
+        if (string.IsNullOrWhiteSpace(manualAmsNetId)) return;
+
+        isConnecting = true;
+        error = null;
+
+        try
+        {
+            var success = await AdsService.ConnectAsync(manualAmsNetId, manualAmsPort);
+
+            if (success)
+            {
+                selectedMachine = new Machine
+                {
+                    Id = "manual",
+                    Name = $"Manual ({manualAmsNetId})",
+                    AmsNetId = manualAmsNetId,
+                    AmsPort = manualAmsPort,
+                    Description = "Manually entered AMS Net ID"
+                };
+                AppState.SetSelectedMachine(selectedMachine);
+            }
+            else
             {
                 error = "Failed to connect to PLC. Please check that TwinCAT is running.";
             }
@@ -172,6 +242,30 @@
 
     .button-group {
         margin-top: 15px;
+    }
+
+    .manual-connect {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .manual-connect h4 {
+        margin: 0 0 15px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .form-group-port input {
+        width: 100%;
     }
 
     .btn {

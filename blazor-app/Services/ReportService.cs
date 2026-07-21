@@ -46,7 +46,8 @@ public class ReportService
                 new() { Name = "Butter", Quantity = 150, Volume = 30, MolarMass = 0 },
                 new() { Name = "Chocolate Chips", Quantity = 100, Volume = 20, MolarMass = 0 },
                 new() { Name = "Eggs", Quantity = 100, Volume = 20, MolarMass = 0 }
-            }
+            },
+            Steps = BuildSampleSteps(new DateTime(2025, 12, 7, 10, 30, 0), "Dosage", "Melange", "Extraction", "Cuisson")
         });
 
         _reports.Add(new Report
@@ -62,7 +63,29 @@ public class ReportService
                 new() { Name = "Vanilla Extract", Quantity = 10, Volume = 2, MolarMass = 0 },
                 new() { Name = "Milk", Quantity = 200, Volume = 50, MolarMass = 0 },
                 new() { Name = "Eggs", Quantity = 120, Volume = 25, MolarMass = 0 }
-            }
+            },
+            Steps = BuildSampleSteps(new DateTime(2025, 12, 6, 14, 20, 0), "Dosage", "Melange", "Cuisson")
         });
+    }
+
+    private static List<ProcessStep> BuildSampleSteps(DateTime start, params string[] stepNames)
+    {
+        var steps = new List<ProcessStep>();
+        var current = start;
+
+        foreach (var name in stepNames)
+        {
+            var end = current.AddSeconds(15);
+            steps.Add(new ProcessStep
+            {
+                Name = name,
+                StartTime = current,
+                EndTime = end,
+                DurationSeconds = 15
+            });
+            current = end;
+        }
+
+        return steps;
     }
 }

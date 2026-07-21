@@ -6,6 +6,9 @@ public class Recipe
     public List<Ingredient> Ingredients { get; set; } = new();
     public double PreparationVolume { get; set; }
     public double PreparationConcentration { get; set; }
+
+    // Ordered process step sequence, e.g. Dosage, Melange, Extraction, Cuisson.
+    public List<string> Steps { get; set; } = new();
 }
 
 public class Ingredient

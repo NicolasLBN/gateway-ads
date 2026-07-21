@@ -27,7 +27,6 @@ public class PlcPollingService : BackgroundService
 
                 if (adsService.IsConnected)
                 {
-                    await adsService.ReadMachineStatusAsync();
                     await adsService.ReadProcessStatusAsync();
                 }
 

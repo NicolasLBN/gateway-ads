@@ -42,7 +42,7 @@ public class PdfService
                     page.DefaultTextStyle(x => x.FontSize(11));
 
                     page.Header()
-                        .Text($"Production Report - {report.RecipeName}")
+                        .Text($"PackML Production Report - {report.RecipeName}")
                         .SemiBold().FontSize(20).FontColor(Colors.Blue.Darken2);
 
                     page.Content()
@@ -138,37 +138,35 @@ public class PdfService
     {
         container.Column(column =>
         {
-            column.Item().Text("Process Steps").SemiBold().FontSize(14);
+            column.Item().Text("Execution Timeline").SemiBold().FontSize(14);
             column.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
+                    columns.ConstantColumn(30);
                     columns.RelativeColumn(2);
+                    columns.ConstantColumn(100);
+                    columns.ConstantColumn(100);
                     columns.ConstantColumn(80);
-                    columns.ConstantColumn(80);
-                    columns.ConstantColumn(80);
-                    columns.ConstantColumn(80);
-                    columns.RelativeColumn();
                 });
 
                 table.Header(header =>
                 {
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("#").FontColor(Colors.White);
                     header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Step").FontColor(Colors.White);
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Time (s)").FontColor(Colors.White);
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Temp (°C)").FontColor(Colors.White);
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Press (bar)").FontColor(Colors.White);
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Speed (rpm)").FontColor(Colors.White);
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Remark").FontColor(Colors.White);
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Start Time").FontColor(Colors.White);
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("End Time").FontColor(Colors.White);
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Duration (s)").FontColor(Colors.White);
                 });
 
-                foreach (var step in report.Steps)
+                for (int i = 0; i < report.Steps.Count; i++)
                 {
+                    var step = report.Steps[i];
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{i + 1}");
                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(step.Name);
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{step.Time}");
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{step.Temp:F1}");
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{step.Pressure:F1}");
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{step.Speed:F0}");
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(step.Remark);
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(step.StartTime.ToString("HH:mm:ss.fff"));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(step.EndTime.ToString("HH:mm:ss.fff"));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{step.DurationSeconds:F1}");
                 }
             });
         });

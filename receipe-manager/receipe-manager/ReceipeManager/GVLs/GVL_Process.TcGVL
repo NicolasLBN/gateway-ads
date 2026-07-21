@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <GVL Name="GVL_Process" Id="{f5dac7a1-a463-4ebf-b9da-7a8402e6cf56}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+    // Live execution status - updated every PLC cycle, read by the Blazor client
+    nCurrentStepIndex     : UINT;              // 1-based index into GVL_Recipe.aStepNames, 0 = none active
+    sCurrentStepName      : STRING(254);
+    nStepTimeElapsed_s    : UINT;               // 0..15
+    nStepTimeRemaining_s  : UINT;               // 15..0
+    nTotalSteps           : UINT;
+    fProgress             : REAL;               // overall recipe progress 0.0..1.0
+    bProcessDone          : BOOL;               // TRUE once state = Complete
+
+    nErrorCode            : INT;
+    sErrorText            : STRING(254);
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

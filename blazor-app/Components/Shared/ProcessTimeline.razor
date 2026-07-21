@@ -4,7 +4,7 @@
 
 <div class="process-timeline-card">
     <h3>Process Timeline</h3>
-    
+
     @if (!AppState.IsConnected)
     {
         <div class="timeline-empty">
@@ -14,30 +14,30 @@
     else if (AppState.LatestProcessStatus != null)
     {
         var process = AppState.LatestProcessStatus;
-        
+
+        <div class="state-badge state-@process.State.ToString().ToLowerInvariant()">
+            @process.StateName
+        </div>
+
         <div class="process-info">
             <div class="progress-bar-container">
                 <div class="progress-bar" style="width: @((process.Progress * 100).ToString("F0"))%">
                     @((process.Progress * 100).ToString("F0"))%
                 </div>
             </div>
-            
+
             <div class="process-details">
                 <div class="detail-row">
                     <span class="label">Current Step:</span>
-                    <span class="value">@process.StepName (@process.CurrentStep)</span>
+                    <span class="value">@(string.IsNullOrEmpty(process.CurrentStepName) ? "-" : process.CurrentStepName) (@process.CurrentStepIndex / @process.TotalSteps)</span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">Step Progress:</span>
-                    <span class="value">@((process.StepProgress * 100).ToString("F0"))%</span>
+                    <span class="label">Step Time Remaining:</span>
+                    <span class="value">@process.StepTimeRemaining s</span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">Step Time:</span>
-                    <span class="value">@process.StepTime s</span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">Total Time:</span>
-                    <span class="value">@process.TotalTime s</span>
+                    <span class="label">Step Time Elapsed:</span>
+                    <span class="value">@process.StepTimeElapsed s</span>
                 </div>
             </div>
 
@@ -51,20 +51,21 @@
             @if (process.ErrorCode != 0)
             {
                 <div class="process-error">
-                    ⚠️ Error @process.ErrorCode: @process.ErrorText
+                    ⚠️ @process.ErrorText
                 </div>
             }
         </div>
 
-        <div class="timeline">
-            @{
-                var steps = new[] { "Idle", "Preparation", "Dosing A", "Dosing B", "Mixing", "Verification", "Finalizing", "Done" };
-                for (int i = 0; i < steps.Length; i++)
+        @if (stepNames.Count > 0)
+        {
+            <div class="timeline">
+                @for (int i = 0; i < stepNames.Count; i++)
                 {
-                    var isActive = i == process.CurrentStep;
-                    var isComplete = i < process.CurrentStep;
+                    var stepNumber = i + 1;
+                    var isActive = process.State == PackMLState.Execute && stepNumber == process.CurrentStepIndex;
+                    var isComplete = stepNumber < process.CurrentStepIndex || process.State is PackMLState.Completing or PackMLState.Complete;
                     var cssClass = isActive ? "active" : (isComplete ? "complete" : "");
-                    
+
                     <div class="timeline-step @cssClass">
                         <div class="timeline-marker">
                             @if (isComplete)
@@ -73,14 +74,14 @@
                             }
                             else
                             {
-                                <span>@i</span>
+                                <span>@stepNumber</span>
                             }
                         </div>
-                        <div class="timeline-label">@steps[i]</div>
+                        <div class="timeline-label">@stepNames[i]</div>
                     </div>
                 }
-            }
-        </div>
+            </div>
+        }
     }
     else
     {
@@ -91,14 +92,32 @@
 </div>
 
 @code {
+    private List<string> stepNames = new();
+
     protected override void OnInitialized()
     {
         AppState.StateChanged += OnStateChanged;
+        RefreshStepNames();
     }
 
     private void OnStateChanged()
     {
+        RefreshStepNames();
         InvokeAsync(StateHasChanged);
+    }
+
+    private void RefreshStepNames()
+    {
+        if (AppState.CurrentRecipe?.Steps.Count > 0)
+        {
+            stepNames = AppState.CurrentRecipe.Steps;
+        }
+        else if (AppState.LatestProcessStatus?.TotalSteps > 0)
+        {
+            stepNames = Enumerable.Range(1, AppState.LatestProcessStatus.TotalSteps)
+                .Select(i => $"Step {i}")
+                .ToList();
+        }
     }
 
     public void Dispose()
@@ -118,6 +137,39 @@
     .process-timeline-card h3 {
         margin-bottom: 20px;
         color: #333;
+    }
+
+    .state-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        background-color: #e9ecef;
+        color: #495057;
+    }
+
+    .state-badge.state-execute {
+        background-color: #d0ebff;
+        color: #1971c2;
+    }
+
+    .state-badge.state-complete {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+    }
+
+    .state-badge.state-stopped {
+        background-color: #ffe0e0;
+        color: #c92a2a;
+    }
+
+    .state-badge.state-idle {
+        background-color: #e9ecef;
+        color: #495057;
     }
 
     .progress-bar-container {
@@ -183,6 +235,8 @@
         justify-content: space-between;
         position: relative;
         margin-top: 30px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .timeline::before {
@@ -203,6 +257,7 @@
         position: relative;
         z-index: 1;
         flex: 1;
+        min-width: 60px;
     }
 
     .timeline-marker {

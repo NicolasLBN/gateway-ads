@@ -13,9 +13,7 @@ public class Report
 public class ProcessStep
 {
     public string Name { get; set; } = string.Empty;
-    public int Time { get; set; }
-    public double Temp { get; set; }
-    public double Pressure { get; set; }
-    public double Speed { get; set; }
-    public string Remark { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public double DurationSeconds { get; set; }
 }

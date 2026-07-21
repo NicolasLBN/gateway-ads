@@ -7,6 +7,7 @@
 @inject AppStateService AppState
 @inject ReportService ReportService
 @inject PdfService PdfService
+@inject FavoritesService FavoritesService
 @inject NavigationManager Navigation
 
 <PageTitle>New Recipe</PageTitle>
@@ -45,7 +46,7 @@
         <div class="recipe-form-section">
             <div class="card">
                 <h2>Recipe Details</h2>
-                
+
                 <div class="form-group">
                     <label>Recipe Name</label>
                     <input type="text" class="form-control" @bind="recipeName" placeholder="Enter recipe name" />
@@ -64,7 +65,7 @@
                 </div>
 
                 <h3>Ingredients</h3>
-                
+
                 @foreach (var (ingredient, index) in ingredients.Select((ing, idx) => (ing, idx)))
                 {
                     <div class="ingredient-card">
@@ -77,7 +78,7 @@
                         </div>
 
                         <input type="text" class="form-control" @bind="ingredient.Name" placeholder="Ingredient name" />
-                        
+
                         <div class="ingredient-fields">
                             <input type="number" class="form-control-sm" @bind="ingredient.Quantity" placeholder="Quantity (g)" />
                             <input type="number" class="form-control-sm" @bind="ingredient.Volume" placeholder="Volume (ml)" />
@@ -90,9 +91,46 @@
                     ➕ Add Ingredient
                 </button>
 
+                <h3>Process Steps</h3>
+
+                <div class="steps-list">
+                    @for (int i = 0; i < steps.Count; i++)
+                    {
+                        var index = i;
+                        <div class="step-item">
+                            <span class="step-number">@(index + 1)</span>
+                            <span class="step-name">@steps[index]</span>
+                            <div class="step-actions">
+                                <button class="btn-icon" title="Move up" @onclick="() => MoveStepUp(index)" disabled="@(index == 0)">↑</button>
+                                <button class="btn-icon" title="Move down" @onclick="() => MoveStepDown(index)" disabled="@(index == steps.Count - 1)">↓</button>
+                                <button class="btn-icon-danger" title="Remove" @onclick="() => RemoveStep(index)">🗑️</button>
+                            </div>
+                        </div>
+                    }
+                    @if (steps.Count == 0)
+                    {
+                        <p class="steps-empty">No steps added yet. A recipe needs at least one step.</p>
+                    }
+                </div>
+
+                <div class="add-step-row">
+                    <select class="form-control" @bind="selectedStepPreset">
+                        <option value="Dosage">Dosage</option>
+                        <option value="Melange">Melange</option>
+                        <option value="Extraction">Extraction</option>
+                        <option value="Cuisson">Cuisson</option>
+                        <option value="__custom__">Custom...</option>
+                    </select>
+                    @if (selectedStepPreset == "__custom__")
+                    {
+                        <input type="text" class="form-control" @bind="customStepName" placeholder="Custom step name" />
+                    }
+                    <button class="btn btn-secondary btn-add-step" @onclick="AddStep">➕ Add Step</button>
+                </div>
+
                 <div class="action-buttons">
-                    <button class="btn btn-primary" @onclick="SendRecipe" disabled="@(!AppState.IsConnected || isSubmitting)">
-                        @if (isSubmitting)
+                    <button class="btn btn-primary" @onclick="SendRecipe" disabled="@(!AppState.IsConnected || isBusy)">
+                        @if (isBusy)
                         {
                             <span>Sending...</span>
                         }
@@ -101,19 +139,31 @@
                             <span>Send Recipe to PLC</span>
                         }
                     </button>
-                    <button class="btn btn-success" @onclick="RunProcess" disabled="@(!AppState.IsConnected || isRunning)">
-                        @if (isRunning)
-                        {
-                            <span>Starting...</span>
-                        }
-                        else
-                        {
-                            <span>▶️ Run Process</span>
-                        }
+                    <button class="btn btn-outline" @onclick="SaveAsFavorite" disabled="@isBusy">
+                        ⭐ Save as Favorite
                     </button>
                 </div>
 
-                @if (AppState.LatestProcessStatus?.ProcessDone == true)
+                <h3>PackML Controls</h3>
+                <div class="packml-controls">
+                    <button class="btn btn-success" @onclick='() => SendCommand(PackMLCommand.Start)' disabled="@(!CanStart || isBusy)">
+                        ▶️ Run Process
+                    </button>
+                    <button class="btn btn-warning" @onclick='() => SendCommand(PackMLCommand.Hold)' disabled="@(!CanHold || isBusy)">
+                        @(AppState.LatestProcessStatus?.IsHeld == true ? "⏵ Resume" : "⏸ Hold")
+                    </button>
+                    <button class="btn btn-danger" @onclick='() => SendCommand(PackMLCommand.Stop)' disabled="@(!CanStop || isBusy)">
+                        ⏹ Stop
+                    </button>
+                    <button class="btn btn-secondary" @onclick='() => SendCommand(PackMLCommand.Reset)' disabled="@(!CanReset || isBusy)">
+                        ↺ Reset
+                    </button>
+                    <button class="btn btn-secondary" @onclick='() => SendCommand(PackMLCommand.Clear)' disabled="@(!CanClear || isBusy)">
+                        ✖ Clear
+                    </button>
+                </div>
+
+                @if (AppState.LatestProcessStatus?.State == PackMLState.Complete)
                 {
                     <button class="btn btn-info" @onclick="GenerateReport">
                         📄 Generate PDF Report
@@ -123,7 +173,6 @@
         </div>
 
         <div class="monitoring-section">
-            <MachineStatus />
             <ProcessTimeline />
         </div>
     </div>
@@ -138,10 +187,19 @@
     private double preparationVolume = 0;
     private double preparationConcentration = 0;
     private List<Ingredient> ingredients = new() { new Ingredient() };
-    private bool isSubmitting = false;
-    private bool isRunning = false;
+    private List<string> steps = new();
+    private string selectedStepPreset = "Dosage";
+    private string customStepName = "";
+    private bool isBusy = false;
     private string? error;
     private string? success;
+
+    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
+    private bool CanStart => AppState.IsConnected && CurrentState is null or PackMLState.Idle;
+    private bool CanStop => AppState.IsConnected && CurrentState is PackMLState.Execute or PackMLState.Starting;
+    private bool CanHold => AppState.IsConnected && CurrentState == PackMLState.Execute;
+    private bool CanReset => AppState.IsConnected && CurrentState is PackMLState.Stopped or PackMLState.Complete;
+    private bool CanClear => AppState.IsConnected && CurrentState == PackMLState.Stopped;
 
     protected override void OnInitialized()
     {
@@ -161,6 +219,44 @@
     private void RemoveIngredient(int index)
     {
         ingredients.RemoveAt(index);
+    }
+
+    private void AddStep()
+    {
+        var name = selectedStepPreset == "__custom__" ? customStepName.Trim() : selectedStepPreset;
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        steps.Add(name);
+        customStepName = "";
+    }
+
+    private void RemoveStep(int index)
+    {
+        steps.RemoveAt(index);
+    }
+
+    private void MoveStepUp(int index)
+    {
+        if (index <= 0 || index >= steps.Count) return;
+        (steps[index - 1], steps[index]) = (steps[index], steps[index - 1]);
+    }
+
+    private void MoveStepDown(int index)
+    {
+        if (index < 0 || index >= steps.Count - 1) return;
+        (steps[index + 1], steps[index]) = (steps[index], steps[index + 1]);
+    }
+
+    private Recipe BuildRecipe()
+    {
+        return new Recipe
+        {
+            Name = recipeName,
+            Ingredients = ingredients.ToList(),
+            PreparationVolume = preparationVolume,
+            PreparationConcentration = preparationConcentration,
+            Steps = steps.ToList()
+        };
     }
 
     private async Task SendRecipe()
@@ -183,26 +279,26 @@
             return;
         }
 
-        isSubmitting = true;
+        if (steps.Count == 0)
+        {
+            error = "Please add at least one process step";
+            return;
+        }
+
+        isBusy = true;
         error = null;
         success = null;
 
         try
         {
-            var recipe = new Recipe
-            {
-                Name = recipeName,
-                Ingredients = ingredients.ToList(),
-                PreparationVolume = preparationVolume,
-                PreparationConcentration = preparationConcentration
-            };
-
+            var recipe = BuildRecipe();
             var result = await AdsService.SendRecipeAsync(recipe);
 
             if (result)
             {
                 AppState.SetCurrentRecipe(recipe);
-                success = "Recipe sent successfully to PLC!";
+                AppState.ClearProcessHistory();
+                success = "Recipe sent successfully to the PLC!";
             }
             else
             {
@@ -215,11 +311,23 @@
         }
         finally
         {
-            isSubmitting = false;
+            isBusy = false;
         }
     }
 
-    private async Task RunProcess()
+    private void SaveAsFavorite()
+    {
+        if (string.IsNullOrWhiteSpace(recipeName))
+        {
+            error = "Please enter a recipe name before saving to favorites";
+            return;
+        }
+
+        FavoritesService.AddFavorite(BuildRecipe());
+        success = $"Recipe '{recipeName}' saved to favorites!";
+    }
+
+    private async Task SendCommand(PackMLCommand command)
     {
         if (!AppState.IsConnected)
         {
@@ -227,29 +335,29 @@
             return;
         }
 
-        isRunning = true;
+        isBusy = true;
         error = null;
-        AppState.ClearProcessHistory();
 
         try
         {
-            var result = await AdsService.StartProcessAsync();
+            var result = await AppState.SendCommandAsync(command);
+
             if (result)
             {
-                success = "Process started successfully!";
+                success = $"Command '{command}' sent!";
             }
             else
             {
-                error = "Failed to start process";
+                error = $"Failed to send command '{command}'";
             }
         }
         catch (Exception ex)
         {
-            error = $"Error starting process: {ex.Message}";
+            error = $"Error sending command: {ex.Message}";
         }
         finally
         {
-            isRunning = false;
+            isBusy = false;
         }
     }
 
@@ -263,22 +371,20 @@
                 MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
                 Date = DateTime.Now,
                 Products = ingredients.ToList(),
-                Steps = new List<ProcessStep>
+                Steps = AppState.CurrentStepTimeline.Select(s => new ProcessStep
                 {
-                    new() { Name = "Preparation", Time = 5, Temp = 28, Pressure = 3.2, Speed = 0, Remark = "OK" },
-                    new() { Name = "Dosing A", Time = 7, Temp = 32, Pressure = 3.5, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Dosing B", Time = 7, Temp = 35, Pressure = 3.6, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Mixing", Time = 10, Temp = 38, Pressure = 3.8, Speed = 1500, Remark = "OK" },
-                    new() { Name = "Verification", Time = 4, Temp = 36, Pressure = 3.4, Speed = 800, Remark = "OK" },
-                    new() { Name = "Finalizing", Time = 3, Temp = 30, Pressure = 3.0, Speed = 0, Remark = "OK" }
-                }
+                    Name = s.StepName,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime ?? s.StartTime,
+                    DurationSeconds = s.DurationSeconds
+                }).ToList()
             };
 
             ReportService.AddReport(report);
-            var fileName = PdfService.GenerateReport(report);
-            
+            PdfService.GenerateReport(report);
+
             success = "Report generated successfully!";
-            
+
             await Task.Delay(2000);
             Navigation.NavigateTo("/history");
         }
@@ -423,6 +529,84 @@
         font-size: 13px;
     }
 
+    .steps-list {
+        margin-bottom: 15px;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+    }
+
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #228be6;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .step-name {
+        flex: 1;
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .step-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-icon {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+
+    .btn-icon:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .btn-icon:hover:not(:disabled) {
+        background-color: #e9ecef;
+    }
+
+    .steps-empty {
+        color: #868e96;
+        font-size: 14px;
+        font-style: italic;
+    }
+
+    .add-step-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .add-step-row .form-control {
+        flex: 1;
+    }
+
+    .btn-add-step {
+        white-space: nowrap;
+    }
+
     .btn {
         padding: 10px 20px;
         border: none;
@@ -459,12 +643,38 @@
     .btn-secondary {
         background-color: #e9ecef;
         color: #495057;
-        width: 100%;
-        margin-bottom: 20px;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
         background-color: #dee2e6;
+    }
+
+    .btn-outline {
+        background-color: white;
+        color: #228be6;
+        border: 1px solid #228be6;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+        background-color: #e7f5ff;
+    }
+
+    .btn-warning {
+        background-color: #fcc419;
+        color: #212529;
+    }
+
+    .btn-warning:hover:not(:disabled) {
+        background-color: #fab005;
+    }
+
+    .btn-danger {
+        background-color: #fa5252;
+        color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+        background-color: #f03e3e;
     }
 
     .btn-info {
@@ -482,8 +692,8 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        font-size: 18px;
-        padding: 0;
+        font-size: 16px;
+        padding: 4px 8px;
         opacity: 0.7;
     }
 
@@ -499,6 +709,17 @@
 
     .action-buttons .btn {
         flex: 1;
+    }
+
+    .packml-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .packml-controls .btn {
+        flex: 1;
+        min-width: 100px;
     }
 
     .monitoring-section {

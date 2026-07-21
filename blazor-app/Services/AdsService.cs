@@ -8,14 +8,17 @@ public class AdsService : IDisposable
 {
     private const int ADS_STRING_BUFFER_SIZE = 255;
     private const int ADS_STRING_MAX_LENGTH = 254;
-    
+    private const int MAX_STEPS = 20;
+    private const int MAX_INGREDIENTS = 10;
+    private const int COMMAND_PULSE_MS = 150;
+
     private AdsClient? _adsClient;
     private readonly ILogger<AdsService> _logger;
     private bool _isConnected;
     private string _amsNetId = "127.0.0.1.1.1";
     private int _amsPort = 851;
+    private bool _isHeld;
 
-    public event EventHandler<MachineStatus>? MachineStatusUpdated;
     public event EventHandler<ProcessStatus>? ProcessStatusUpdated;
 
     public bool IsConnected => _isConnected;
@@ -34,19 +37,20 @@ public class AdsService : IDisposable
 
             _adsClient?.Dispose();
             _adsClient = new AdsClient();
-            
+
             await Task.Run(() => _adsClient.Connect(_amsNetId, _amsPort));
-            
+
             _isConnected = _adsClient.IsConnected;
-            
+
             if (_isConnected)
             {
                 _logger.LogInformation($"Connected to PLC at {_amsNetId}:{_amsPort}");
-                
-                // Set connection status in PLC
-                await WriteSymbolAsync("GVL_Command.AdsConnected", true);
+                _isHeld = false;
+
+                // Let the PLC know a client is now connected
+                await WriteSymbolAsync("GVL_Command.bAdsConnected", true);
             }
-            
+
             return _isConnected;
         }
         catch (Exception ex)
@@ -74,33 +78,6 @@ public class AdsService : IDisposable
         }
     }
 
-    public async Task<MachineStatus?> ReadMachineStatusAsync()
-    {
-        if (!_isConnected || _adsClient == null)
-            return null;
-
-        try
-        {
-            var status = new MachineStatus
-            {
-                MotorTemperature = await ReadSymbolAsync<float>("GVL_Machine.MotorTemperature"),
-                OilPressure = await ReadSymbolAsync<float>("GVL_Machine.OilPressure"),
-                MotorSpeed = await ReadSymbolAsync<float>("GVL_Machine.MotorSpeed"),
-                TempWarning = await ReadSymbolAsync<bool>("GVL_Machine.TempWarning"),
-                PressureWarning = await ReadSymbolAsync<bool>("GVL_Machine.PressureWarning"),
-                SpeedWarning = await ReadSymbolAsync<bool>("GVL_Machine.SpeedWarning")
-            };
-
-            MachineStatusUpdated?.Invoke(this, status);
-            return status;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error reading machine status");
-            return null;
-        }
-    }
-
     public async Task<ProcessStatus?> ReadProcessStatusAsync()
     {
         if (!_isConnected || _adsClient == null)
@@ -108,17 +85,24 @@ public class AdsService : IDisposable
 
         try
         {
+            var stateCode = await ReadSymbolAsync<short>("GVL_State.nState");
+
             var status = new ProcessStatus
             {
-                CurrentStep = await ReadSymbolAsync<short>("GVL_Process.CurrentStep"),
-                StepName = await ReadSymbolAsync<string>("GVL_Process.StepName"),
-                Progress = await ReadSymbolAsync<float>("GVL_Process.Progress"),
-                StepProgress = await ReadSymbolAsync<float>("GVL_Process.StepProgress"),
-                StepTime = await ReadSymbolAsync<uint>("GVL_Process.StepTime_s"),
-                TotalTime = await ReadSymbolAsync<uint>("GVL_Process.TotalTime_s"),
-                ErrorCode = await ReadSymbolAsync<short>("GVL_Process.ErrorCode"),
-                ErrorText = await ReadSymbolAsync<string>("GVL_Process.ErrorText"),
-                ProcessDone = await ReadSymbolAsync<bool>("GVL_Process.ProcessDone")
+                State = Enum.IsDefined(typeof(PackMLState), (int)stateCode)
+                    ? (PackMLState)stateCode
+                    : PackMLState.Clearing,
+                StateName = await ReadSymbolAsync<string>("GVL_State.sStateName"),
+                CurrentStepIndex = await ReadSymbolAsync<ushort>("GVL_Process.nCurrentStepIndex"),
+                CurrentStepName = await ReadSymbolAsync<string>("GVL_Process.sCurrentStepName"),
+                TotalSteps = await ReadSymbolAsync<ushort>("GVL_Process.nTotalSteps"),
+                StepTimeElapsed = await ReadSymbolAsync<ushort>("GVL_Process.nStepTimeElapsed_s"),
+                StepTimeRemaining = await ReadSymbolAsync<ushort>("GVL_Process.nStepTimeRemaining_s"),
+                Progress = await ReadSymbolAsync<float>("GVL_Process.fProgress"),
+                ProcessDone = await ReadSymbolAsync<bool>("GVL_Process.bProcessDone"),
+                IsHeld = await ReadSymbolAsync<bool>("GVL_State.bHeld"),
+                ErrorCode = await ReadSymbolAsync<short>("GVL_Process.nErrorCode"),
+                ErrorText = await ReadSymbolAsync<string>("GVL_Process.sErrorText")
             };
 
             ProcessStatusUpdated?.Invoke(this, status);
@@ -138,23 +122,31 @@ public class AdsService : IDisposable
 
         try
         {
-            // Send recipe name
-            await WriteSymbolAsync("GVL_Recipe.RecipeName", recipe.Name);
-            
-            // Send number of ingredients
-            await WriteSymbolAsync("GVL_Recipe.NumIngredients", (uint)recipe.Ingredients.Count);
+            await WriteSymbolAsync("GVL_Recipe.sRecipeName", recipe.Name);
+            await WriteSymbolAsync("GVL_Recipe.fPreparationVolume", (float)recipe.PreparationVolume);
+            await WriteSymbolAsync("GVL_Recipe.fPreparationConcentration", (float)recipe.PreparationConcentration);
 
-            // Send ingredient data
-            for (int i = 0; i < recipe.Ingredients.Count && i < 10; i++)
+            // Ordered process steps (Dosage, Melange, Extraction, Cuisson, ...)
+            var steps = recipe.Steps.Take(MAX_STEPS).ToList();
+            await WriteSymbolAsync("GVL_Recipe.nNumSteps", (ushort)steps.Count);
+            for (int i = 0; i < steps.Count; i++)
             {
-                var ingredient = recipe.Ingredients[i];
-                await WriteSymbolAsync($"GVL_Recipe.IngredientName[{i + 1}]", ingredient.Name);
-                await WriteSymbolAsync($"GVL_Recipe.IngredientQuantity[{i + 1}]", (float)ingredient.Quantity);
-                await WriteSymbolAsync($"GVL_Recipe.IngredientVolume[{i + 1}]", (float)ingredient.Volume);
-                await WriteSymbolAsync($"GVL_Recipe.IngredientMolarMass[{i + 1}]", (float)ingredient.MolarMass);
+                await WriteSymbolAsync($"GVL_Recipe.aStepNames[{i + 1}]", steps[i]);
             }
 
-            _logger.LogInformation($"Recipe '{recipe.Name}' sent to PLC");
+            // Ingredients and quantities
+            var ingredients = recipe.Ingredients.Take(MAX_INGREDIENTS).ToList();
+            await WriteSymbolAsync("GVL_Recipe.nNumIngredients", (ushort)ingredients.Count);
+            for (int i = 0; i < ingredients.Count; i++)
+            {
+                var ingredient = ingredients[i];
+                await WriteSymbolAsync($"GVL_Recipe.aIngredientName[{i + 1}]", ingredient.Name);
+                await WriteSymbolAsync($"GVL_Recipe.aIngredientQuantity[{i + 1}]", (float)ingredient.Quantity);
+                await WriteSymbolAsync($"GVL_Recipe.aIngredientVolume[{i + 1}]", (float)ingredient.Volume);
+                await WriteSymbolAsync($"GVL_Recipe.aIngredientMolarMass[{i + 1}]", (float)ingredient.MolarMass);
+            }
+
+            _logger.LogInformation($"Recipe '{recipe.Name}' sent to PLC ({steps.Count} steps, {ingredients.Count} ingredients)");
             return true;
         }
         catch (Exception ex)
@@ -164,47 +156,44 @@ public class AdsService : IDisposable
         }
     }
 
-    public async Task<bool> StartProcessAsync()
+    /// <summary>
+    /// Sends a PackML command to the PLC. Reset/Clear/Start/Stop are sent as a momentary
+    /// pulse (TRUE then FALSE); Hold toggles a level signal that pauses/resumes the active step.
+    /// </summary>
+    public async Task<bool> SendCommandAsync(PackMLCommand command)
     {
         if (!_isConnected || _adsClient == null)
             return false;
 
         try
         {
-            // Reset first, then start
-            await WriteSymbolAsync("GVL_Command.ResetProcess", false);
-            await Task.Delay(100);
-            await WriteSymbolAsync("GVL_Command.StartProcess", true);
-            await Task.Delay(100);
-            await WriteSymbolAsync("GVL_Command.StartProcess", false);
-            
-            _logger.LogInformation("Process started");
+            if (command == PackMLCommand.Hold)
+            {
+                _isHeld = !_isHeld;
+                await WriteSymbolAsync("GVL_Command.bHold", _isHeld);
+                _logger.LogInformation($"Hold set to {_isHeld}");
+                return true;
+            }
+
+            var symbolName = command switch
+            {
+                PackMLCommand.Reset => "GVL_Command.bReset",
+                PackMLCommand.Clear => "GVL_Command.bClear",
+                PackMLCommand.Start => "GVL_Command.bStart",
+                PackMLCommand.Stop => "GVL_Command.bStop",
+                _ => throw new ArgumentOutOfRangeException(nameof(command))
+            };
+
+            await WriteSymbolAsync(symbolName, true);
+            await Task.Delay(COMMAND_PULSE_MS);
+            await WriteSymbolAsync(symbolName, false);
+
+            _logger.LogInformation($"PackML command {command} sent");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting process");
-            return false;
-        }
-    }
-
-    public async Task<bool> ResetProcessAsync()
-    {
-        if (!_isConnected || _adsClient == null)
-            return false;
-
-        try
-        {
-            await WriteSymbolAsync("GVL_Command.ResetProcess", true);
-            await Task.Delay(100);
-            await WriteSymbolAsync("GVL_Command.ResetProcess", false);
-            
-            _logger.LogInformation("Process reset");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resetting process");
+            _logger.LogError(ex, $"Error sending PackML command {command}");
             return false;
         }
     }

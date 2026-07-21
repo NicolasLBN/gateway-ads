@@ -3,145 +3,77 @@
 @inject AppStateService AppState
 
 <div class="realtime-chart-card">
-    <h3>Real-time Machine Data</h3>
-    
-    @if (!AppState.IsConnected || AppState.MachineHistory.Count == 0)
+    <h3>Live Step Progress</h3>
+
+    @if (!AppState.IsConnected || AppState.LatestProcessStatus == null)
     {
         <div class="chart-empty">
-            <p>No data available. Connect to a machine and start a process to see real-time charts.</p>
+            <p>No data available. Connect to a machine and start a process to see live step progress.</p>
         </div>
     }
     else
     {
-        <div class="chart-container">
-            <div class="chart">
-                <div class="chart-title">Temperature (°C)</div>
-                <svg width="100%" height="150" viewBox="0 0 600 150">
-                    <!-- Grid lines -->
-                    @for (int i = 0; i <= 4; i++)
-                    {
-                        var y = 30 + i * 30;
-                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
-                    }
-                    
-                    <!-- Data line -->
-                    @if (tempPoints.Any())
-                    {
-                        <polyline points="@tempPoints" fill="none" stroke="#fa5252" stroke-width="2"/>
-                    }
-                    
-                    <!-- Axes -->
-                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
-                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
+        var process = AppState.LatestProcessStatus;
+        var fraction = process.State == PackMLState.Execute
+            ? Math.Clamp(1.0 - (process.StepTimeRemaining / 15.0), 0.0, 1.0)
+            : 0.0;
+        var dashOffset = Circumference * (1 - fraction);
 
-            <div class="chart">
-                <div class="chart-title">Pressure (bar)</div>
-                <svg width="100%" height="150" viewBox="0 0 600 150">
-                    <!-- Grid lines -->
-                    @for (int i = 0; i <= 4; i++)
-                    {
-                        var y = 30 + i * 30;
-                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
-                    }
-                    
-                    <!-- Data line -->
-                    @if (pressurePoints.Any())
-                    {
-                        <polyline points="@pressurePoints" fill="none" stroke="#228be6" stroke-width="2"/>
-                    }
-                    
-                    <!-- Axes -->
-                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
-                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
-                </svg>
-            </div>
-
-            <div class="chart">
-                <div class="chart-title">Speed (RPM)</div>
-                <svg width="100%" height="150" viewBox="0 0 600 150">
-                    <!-- Grid lines -->
-                    @for (int i = 0; i <= 4; i++)
-                    {
-                        var y = 30 + i * 30;
-                        <line x1="40" y1="@y" x2="580" y2="@y" stroke="#e9ecef" stroke-width="1"/>
-                    }
-                    
-                    <!-- Data line -->
-                    @if (speedPoints.Any())
-                    {
-                        <polyline points="@speedPoints" fill="none" stroke="#51cf66" stroke-width="2"/>
-                    }
-                    
-                    <!-- Axes -->
-                    <line x1="40" y1="30" x2="40" y2="150" stroke="#333" stroke-width="2"/>
-                    <line x1="40" y1="150" x2="580" y2="150" stroke="#333" stroke-width="2"/>
-                </svg>
+        <div class="countdown-section">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="#e9ecef" stroke-width="12" />
+                <circle cx="80" cy="80" r="70" fill="none" stroke="#228be6" stroke-width="12"
+                        stroke-dasharray="@Circumference" stroke-dashoffset="@dashOffset"
+                        stroke-linecap="round" transform="rotate(-90 80 80)" />
+                <text x="80" y="75" text-anchor="middle" font-size="28" font-weight="700" fill="#212529">
+                    @process.StepTimeRemaining s
+                </text>
+                <text x="80" y="98" text-anchor="middle" font-size="12" fill="#868e96">
+                    remaining
+                </text>
+            </svg>
+            <div class="countdown-label">
+                @(string.IsNullOrEmpty(process.CurrentStepName) ? "No active step" : process.CurrentStepName)
             </div>
         </div>
+
+        <div class="chart-title">Step Durations (target: 15s)</div>
+        @if (AppState.CurrentStepTimeline.Count == 0)
+        {
+            <div class="chart-empty small">
+                <p>No steps executed yet in this run.</p>
+            </div>
+        }
+        else
+        {
+            <div class="bars">
+                @foreach (var step in AppState.CurrentStepTimeline)
+                {
+                    var barHeight = Math.Min(100, (step.DurationSeconds / 15.0) * 100);
+                    <div class="bar-item">
+                        <div class="bar-track">
+                            <div class="bar-fill" style="height: @(barHeight.ToString("F0"))%"></div>
+                        </div>
+                        <div class="bar-value">@step.DurationSeconds.ToString("F0")s</div>
+                        <div class="bar-label">@step.StepName</div>
+                    </div>
+                }
+            </div>
+        }
     }
 </div>
 
 @code {
-    private string tempPoints = "";
-    private string pressurePoints = "";
-    private string speedPoints = "";
+    private const double Circumference = 2 * Math.PI * 70;
 
     protected override void OnInitialized()
     {
         AppState.StateChanged += OnStateChanged;
-        UpdateCharts();
     }
 
     private void OnStateChanged()
     {
-        UpdateCharts();
         InvokeAsync(StateHasChanged);
-    }
-
-    private void UpdateCharts()
-    {
-        var history = AppState.MachineHistory;
-        if (!history.Any()) return;
-
-        // Take last 50 points
-        var points = history.TakeLast(50).ToList();
-        var maxPoints = 50;
-        var width = 540.0;
-        var height = 120.0;
-        var xOffset = 40.0;
-        var yOffset = 30.0;
-
-        // Temperature chart
-        var tempMin = 0.0;
-        var tempMax = points.Any() ? Math.Max(50, points.Max(p => p.Status.MotorTemperature)) : 50;
-        tempPoints = string.Join(" ", points.Select((p, i) =>
-        {
-            var x = xOffset + (i * width / maxPoints);
-            var y = yOffset + height - (p.Status.MotorTemperature - tempMin) / (tempMax - tempMin) * height;
-            return $"{x:F1},{y:F1}";
-        }));
-
-        // Pressure chart
-        var pressureMin = 0.0;
-        var pressureMax = points.Any() ? Math.Max(5, points.Max(p => p.Status.OilPressure)) : 5;
-        pressurePoints = string.Join(" ", points.Select((p, i) =>
-        {
-            var x = xOffset + (i * width / maxPoints);
-            var y = yOffset + height - (p.Status.OilPressure - pressureMin) / (pressureMax - pressureMin) * height;
-            return $"{x:F1},{y:F1}";
-        }));
-
-        // Speed chart
-        var speedMin = 0.0;
-        var speedMax = points.Any() ? Math.Max(2000, points.Max(p => p.Status.MotorSpeed)) : 2000;
-        speedPoints = string.Join(" ", points.Select((p, i) =>
-        {
-            var x = xOffset + (i * width / maxPoints);
-            var y = yOffset + height - (p.Status.MotorSpeed - speedMin) / (speedMax - speedMin) * height;
-            return $"{x:F1},{y:F1}";
-        }));
     }
 
     public void Dispose()
@@ -163,35 +95,84 @@
         color: #333;
     }
 
-    .chart-container {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 30px;
+    .countdown-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 25px;
     }
 
-    @@media (min-width: 768px) {
-        .chart-container {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    .chart {
-        background-color: #f8f9fa;
-        border-radius: 6px;
-        padding: 15px;
+    .countdown-label {
+        margin-top: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #495057;
     }
 
     .chart-title {
         font-size: 14px;
         font-weight: 600;
         color: #495057;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         text-align: center;
+    }
+
+    .bars {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 16px;
+        height: 160px;
+        padding: 0 10px;
+        overflow-x: auto;
+    }
+
+    .bar-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 50px;
+    }
+
+    .bar-track {
+        width: 28px;
+        height: 100px;
+        background-color: #f1f3f5;
+        border-radius: 4px;
+        display: flex;
+        align-items: flex-end;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        width: 100%;
+        background: linear-gradient(180deg, #339af0, #228be6);
+        border-radius: 4px 4px 0 0;
+        transition: height 0.3s ease;
+    }
+
+    .bar-value {
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .bar-label {
+        margin-top: 2px;
+        font-size: 11px;
+        color: #868e96;
+        text-align: center;
+        max-width: 60px;
     }
 
     .chart-empty {
         text-align: center;
         padding: 60px 20px;
         color: #868e96;
+    }
+
+    .chart-empty.small {
+        padding: 20px;
     }
 </style>
