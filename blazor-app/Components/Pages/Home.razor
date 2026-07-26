@@ -1,91 +1,76 @@
 @page "/"
 @rendermode InteractiveServer
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Home</PageTitle>
 
-<div class="dashboard">
-    <h1 class="page-title">Dashboard</h1>
+<div class="home">
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Industrial HMI</p>
+            <h1>Recipe Manager</h1>
+            <p class="lead">Configure recipes, send them to the PLC, then run the cooking cycle under PackML control.</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+                <rect x="10" y="20" width="100" height="80" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+                <rect x="22" y="36" width="28" height="20" fill="currentColor" opacity="0.85"/>
+                <rect x="58" y="36" width="40" height="8" fill="currentColor" opacity="0.45"/>
+                <rect x="58" y="50" width="28" height="6" fill="currentColor" opacity="0.35"/>
+                <circle cx="36" cy="78" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
+                <path d="M70 70h28v18H70z" fill="none" stroke="currentColor" stroke-width="3"/>
+            </svg>
+        </div>
+    </section>
 
-    <div class="dashboard-grid">
-        <a href="/new-recipe" class="dashboard-card">
-            <div class="card-icon">➕</div>
-            <h2>Create New Recipe</h2>
-            <p>Start a new recipe and configure ingredients</p>
+    <section class="actions">
+        <a class="action-tile" href="/new-recipe">
+            <span class="tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 5h18v2H3V5zm0 6h12v2H3v-2zm0 6h18v2H3v-2zm16-7h2v8h-2v-3h-2v-2h2V10z"/></svg>
+            </span>
+            <span class="tile-body">
+                <span class="tile-title">New recipe</span>
+                <span class="tile-desc">Define steps, ingredients and send to PLC</span>
+            </span>
         </a>
 
-        <a href="/history" class="dashboard-card">
-            <div class="card-icon">📋</div>
-            <h2>View Recipe History</h2>
-            <p>Access past recipes and download reports</p>
+        <a class="action-tile" href="/cooking">
+            <span class="tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v1.06A8.001 8.001 0 0 1 20 12h2a1 1 0 1 1 0 2h-2.06A8.001 8.001 0 0 1 13 20.94V22a1 1 0 1 1-2 0v-1.06A8.001 8.001 0 0 1 4.06 14H2a1 1 0 1 1 0-2h2.06A8.001 8.001 0 0 1 11 4.06V3a1 1 0 0 1 1-1zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+            </span>
+            <span class="tile-body">
+                <span class="tile-title">Cooking</span>
+                <span class="tile-desc">Run process, monitor timeline and status</span>
+            </span>
         </a>
 
-        <a href="/favorites" class="dashboard-card">
-            <div class="card-icon">⭐</div>
-            <h2>Favorites</h2>
-            <p>Save and quickly re-send your favorite recipes</p>
+        <a class="action-tile" href="/favorites">
+            <span class="tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+            </span>
+            <span class="tile-body">
+                <span class="tile-title">Favorites</span>
+                <span class="tile-desc">Load saved recipes and send again</span>
+            </span>
         </a>
 
-        <a href="/machine-settings" class="dashboard-card">
-            <div class="card-icon">⚙️</div>
-            <h2>Machine Settings</h2>
-            <p>Configure PLC connection and machine parameters</p>
+        <a class="action-tile" href="/history">
+            <span class="tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 1-7.07 2.93L3 7V3h4L5.4 4.6A8 8 0 1 0 12 4v2a6 6 0 1 1-6 6H4a8 8 0 0 0 8 8 8 8 0 0 0 0-16zm1 4v5.2l3.4 2-1 1.6L11 12V6h2z"/></svg>
+            </span>
+            <span class="tile-body">
+                <span class="tile-title">History</span>
+                <span class="tile-desc">Browse completed batches and PDF reports</span>
+            </span>
         </a>
-    </div>
+
+        <a class="action-tile" href="/machine-settings">
+            <span class="tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.03 7.03 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.6.24-1.15.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.69.22l2.39-.96c.48.39 1.03.7 1.63.94l.36 2.54c.05.24.25.42.49.42h3.8c.24 0 .44-.18.49-.42l.36-2.54c.6-.24 1.15-.55 1.63-.94l2.39.96c.26.12.55.02.69-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>
+            </span>
+            <span class="tile-body">
+                <span class="tile-title">Machine settings</span>
+                <span class="tile-desc">ADS endpoint and machine selection</span>
+            </span>
+        </a>
+    </section>
 </div>
-
-<style>
-    .dashboard {
-        max-width: 1200px;
-    }
-
-    .page-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #212529;
-        margin-bottom: 30px;
-    }
-
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-    }
-
-    .dashboard-card {
-        background: white;
-        border-radius: 12px;
-        padding: 40px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    .card-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-    }
-
-    .dashboard-card h2 {
-        font-size: 22px;
-        font-weight: 600;
-        color: #212529;
-        margin: 0 0 10px 0;
-    }
-
-    .dashboard-card p {
-        font-size: 14px;
-        color: #868e96;
-        margin: 0;
-    }
-</style>

@@ -5,6 +5,10 @@ using System.Text;
 
 namespace BlazorApp.Services;
 
+/// <summary>
+/// ADS client for RecipeManager, inspired by ThermalWinch <c>IOMasterAds</c>:
+/// connect via AMS Net ID string, optional auto-reconnect loop, startup from config.
+/// </summary>
 public class AdsService : IDisposable
 {
     private const int ADS_STRING_BUFFER_SIZE = 255;
@@ -16,12 +20,19 @@ public class AdsService : IDisposable
     private AdsClient? _adsClient;
     private readonly ILogger<AdsService> _logger;
     private readonly AdsOptions _options;
+    private readonly object _lock = new();
+    private readonly CancellationTokenSource _reconnectCts = new();
+    private Task? _reconnectLoop;
     private bool _isConnected;
+    private bool _autoReconnectEnabled;
+    private bool _manualDisconnect;
     private string _amsNetId;
     private int _amsPort;
     private bool _isHeld;
+    private bool _disposed;
 
     public event EventHandler<ProcessStatus>? ProcessStatusUpdated;
+    public event EventHandler? ConnectionStateChanged;
 
     public bool IsConnected => _isConnected;
 
@@ -37,137 +48,166 @@ public class AdsService : IDisposable
         _options = options.Value;
         _amsNetId = _options.AmsNetId;
         _amsPort = _options.AmsPort;
+        _autoReconnectEnabled = _options.AutoReconnect;
+
+        // Same as ThermalWinch IOMasterAds: one long-lived AdsClient, reconnect via Disconnect+Connect
+        _adsClient = new AdsClient
+        {
+            Timeout = Math.Max(1000, _options.TimeoutMs)
+        };
     }
 
     /// <summary>
-    /// Connect using the fixed AMS Net ID + port from appsettings.json.
+    /// Starts background connection using AMS Net ID from appsettings (ThermalWinch PreBuild pattern).
+    /// Does not throw if the PLC is not ready yet — AutoReconnect keeps retrying.
     /// </summary>
-    public Task<bool> ConnectFromConfigAsync()
+    public Task StartAutoConnectAsync()
     {
-        return ConnectAsync(_options.AmsNetId, _options.AmsPort);
+        _manualDisconnect = false;
+        _amsNetId = _options.AmsNetId?.Trim() ?? string.Empty;
+        _amsPort = _options.AmsPort;
+        _autoReconnectEnabled = _options.AutoReconnect;
+
+        // Immediate first attempt (non-blocking for callers that await a single try)
+        var connected = TryConnect();
+        if (connected)
+        {
+            _logger.LogInformation("ADS connected at startup to {AmsNetId}:{Port}", _amsNetId, _amsPort);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "ADS not available at startup ({Detail}). AutoReconnect={AutoReconnect}",
+                LastError, _autoReconnectEnabled);
+        }
+
+        EnsureReconnectLoop();
+        return Task.CompletedTask;
     }
 
-    public async Task<bool> ConnectAsync(string amsNetId, int amsPort)
+    /// <summary>Connect using the fixed AMS Net ID + port from appsettings.json.</summary>
+    public Task<bool> ConnectFromConfigAsync()
+    {
+        _manualDisconnect = false;
+        var ok = TryConnect(_options.AmsNetId, _options.AmsPort);
+        if (!ok && _options.AutoReconnect)
+        {
+            EnsureReconnectLoop();
+        }
+
+        return Task.FromResult(ok);
+    }
+
+    public Task<bool> ConnectAsync(string amsNetId, int amsPort)
+    {
+        _manualDisconnect = false;
+        return Task.FromResult(TryConnect(amsNetId, amsPort));
+    }
+
+    /// <summary>
+    /// Same contract as ThermalWinch <c>IOMasterAds.TryConnect</c>:
+    /// <c>_client.Connect(AmsNetId, Port)</c> then verify state.
+    /// </summary>
+    public bool TryConnect() => TryConnect(_amsNetId, _amsPort);
+
+    public bool TryConnect(string amsNetId, int amsPort)
     {
         LastError = null;
 
-        try
+        lock (_lock)
         {
-            _amsNetId = amsNetId?.Trim() ?? string.Empty;
-            _amsPort = amsPort;
-
-            _adsClient?.Dispose();
-            // CompatibilityDefault / Default use Router+TcpIp (needed for TwinCAT UmRT).
-            _adsClient = new AdsClient(new AdsClientSettings(Math.Max(1000, _options.TimeoutMs)));
-
-            // Prefer AmsNetId.Local for loopback targets: the machine's real AMS Net ID
-            // is often not 127.0.0.1.1.1, and string Connect can fail earlier with
-            // ClientPortNotOpen when the router rejects a mismatched route.
-            await Task.Run(() =>
+            try
             {
-                // Always prefer Local for the machine's own runtime (UmRT / TcSysSrv).
-                // Using the numeric local NetId as a "remote" target can fail earlier
-                // while registering the Dynamic client port.
-                if (ShouldUseLocalRouter(_amsNetId))
+                _amsNetId = amsNetId?.Trim() ?? string.Empty;
+                _amsPort = amsPort;
+
+                EnsureClient();
+                var client = _adsClient!;
+
+                // ThermalWinch IOMasterAds: Disconnect() then Connect on the SAME client (no Dispose)
+                try
                 {
-                    _logger.LogInformation("ADS Connect via AmsNetId.Local -> port {Port}", _amsPort);
-                    _adsClient.Connect(AmsNetId.Local, _amsPort);
+                    if (client.IsConnected)
+                        client.Disconnect();
+                }
+                catch
+                {
+                    // ignore disconnect errors before reconnect
+                }
+
+                _logger.LogInformation("ADS Connect({AmsNetId}, {Port})", _amsNetId, _amsPort);
+                client.Connect(_amsNetId, _amsPort);
+
+                var adsState = client.ReadState().AdsState;
+                _logger.LogInformation("ADS state after connect: {AdsState}", adsState);
+
+                _isConnected = client.IsConnected;
+                _isHeld = false;
+
+                if (_isConnected)
+                {
+                    try
+                    {
+                        WriteSymbol("GVL_Command.bAdsConnected", true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Connected but could not write GVL_Command.bAdsConnected (symbols may be missing)");
+                    }
                 }
                 else
                 {
-                    var netId = AmsNetId.Parse(_amsNetId);
-                    _logger.LogInformation("ADS Connect via {NetId} -> port {Port}", netId, _amsPort);
-                    _adsClient.Connect(netId, _amsPort);
+                    LastError = $"ADS Connect returned IsConnected=false for {_amsNetId}:{_amsPort}.";
                 }
-            });
 
-            _isConnected = _adsClient.IsConnected;
-
-            if (_isConnected)
-            {
-                _logger.LogInformation(
-                    "Connected to PLC at {AmsNetId}:{AmsPort} (from config, local={IsLocal})",
-                    _amsNetId, _amsPort, IsLocalAmsNetId(_amsNetId));
-                _isHeld = false;
-
-                await WriteSymbolAsync("GVL_Command.bAdsConnected", true);
+                ConnectionStateChanged?.Invoke(this, EventArgs.Empty);
+                return _isConnected;
             }
-            else
+            catch (Exception ex)
             {
-                LastError = $"ADS Connect returned without error but IsConnected=false for {_amsNetId}:{_amsPort}.";
-            }
+                LastError = BuildFriendlyAdsError(ex, amsNetId, amsPort);
+                _logger.LogError(ex, "Failed to connect to PLC: {Detail}", LastError);
+                _isConnected = false;
 
-            return _isConnected;
-        }
-        catch (Exception ex)
-        {
-            LastError = BuildFriendlyAdsError(ex, amsNetId, amsPort);
-            _logger.LogError(ex, "Failed to connect to PLC: {Detail}", LastError);
-            _isConnected = false;
-            return false;
+                // Keep the client instance (ThermalWinch style); only disconnect
+                try { _adsClient?.Disconnect(); } catch { /* ignore */ }
+
+                ConnectionStateChanged?.Invoke(this, EventArgs.Empty);
+                return false;
+            }
         }
     }
 
-    private static bool ShouldUseLocalRouter(string amsNetId)
+    private void EnsureClient()
     {
-        if (string.IsNullOrWhiteSpace(amsNetId))
-            return true;
+        if (_adsClient != null)
+            return;
 
-        var normalized = amsNetId.Trim().ToLowerInvariant();
-        if (normalized is "local" or "127.0.0.1.1.1" or "::1" or "localhost")
-            return true;
-
-        // Also treat the machine's real AMS Net ID as local (shown in UmRT / TcSysUI).
-        try
+        _adsClient = new AdsClient
         {
-            var configured = AmsNetId.Parse(amsNetId.Trim());
-            return configured == AmsNetId.Local;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static bool IsLocalAmsNetId(string amsNetId) => ShouldUseLocalRouter(amsNetId);
-
-    private static string BuildFriendlyAdsError(Exception ex, string? amsNetId, int amsPort)
-    {
-        var message = ex.Message ?? string.Empty;
-
-        if (message.Contains("ClientPortNotOpen", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("ConnectPortFailed", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("Cannot register AmsPort", StringComparison.OrdinalIgnoreCase))
-        {
-            return
-                $"Cannot open an ADS client port to {amsNetId}:{amsPort}. " +
-                "TwinCAT Message Router rejected the connection (ClientPortNotOpen). " +
-                "Likely cause on this PC: TWO TcSystemServiceUm processes — " +
-                "an orphan owns ADS port 48898 while UmRT_Default is another PID. " +
-                "Fix: Task Manager → end the older TcSystemServiceUm that is NOT UmRT_Default, " +
-                "or in UmRT press 'x' then restart UmRT_Default only (one instance). " +
-                "Then confirm state=Run ('s'), activate ReceipeManager on port 851, restart Blazor, retry. " +
-                $"Raw: {message}";
-        }
-
-        return $"ADS connection to {amsNetId}:{amsPort} failed: {message}";
+            Timeout = Math.Max(1000, _options.TimeoutMs)
+        };
     }
 
     public void Disconnect()
     {
-        try
+        _manualDisconnect = true;
+        lock (_lock)
         {
-            if (_adsClient != null && _isConnected)
-            {
-                _adsClient.Disconnect();
-                _isConnected = false;
-                _logger.LogInformation("Disconnected from PLC");
-            }
+            DisconnectInternal(notify: true);
         }
-        catch (Exception ex)
+    }
+
+    /// <summary>Request a reconnect on the next auto-reconnect cycle (like IOMasterAds.Reset).</summary>
+    public void Reset()
+    {
+        _manualDisconnect = false;
+        lock (_lock)
         {
-            _logger.LogError(ex, "Error disconnecting from PLC");
+            DisconnectInternal(notify: true);
         }
+
+        EnsureReconnectLoop();
     }
 
     public async Task<ProcessStatus?> ReadProcessStatusAsync()
@@ -177,32 +217,44 @@ public class AdsService : IDisposable
 
         try
         {
-            var stateCode = await ReadSymbolAsync<short>("GVL_State.nState");
-
-            var status = new ProcessStatus
+            var status = await Task.Run(() =>
             {
-                State = Enum.IsDefined(typeof(PackMLState), (int)stateCode)
-                    ? (PackMLState)stateCode
-                    : PackMLState.Clearing,
-                StateName = await ReadSymbolAsync<string>("GVL_State.sStateName"),
-                CurrentStepIndex = await ReadSymbolAsync<ushort>("GVL_Process.nCurrentStepIndex"),
-                CurrentStepName = await ReadSymbolAsync<string>("GVL_Process.sCurrentStepName"),
-                TotalSteps = await ReadSymbolAsync<ushort>("GVL_Process.nTotalSteps"),
-                StepTimeElapsed = await ReadSymbolAsync<ushort>("GVL_Process.nStepTimeElapsed_s"),
-                StepTimeRemaining = await ReadSymbolAsync<ushort>("GVL_Process.nStepTimeRemaining_s"),
-                Progress = await ReadSymbolAsync<float>("GVL_Process.fProgress"),
-                ProcessDone = await ReadSymbolAsync<bool>("GVL_Process.bProcessDone"),
-                IsHeld = await ReadSymbolAsync<bool>("GVL_State.bHeld"),
-                ErrorCode = await ReadSymbolAsync<short>("GVL_Process.nErrorCode"),
-                ErrorText = await ReadSymbolAsync<string>("GVL_Process.sErrorText")
-            };
+                lock (_lock)
+                {
+                    if (!_isConnected || _adsClient == null)
+                        return null;
 
-            ProcessStatusUpdated?.Invoke(this, status);
+                    var stateCode = ReadSymbol<short>("GVL_State.nState");
+
+                    return new ProcessStatus
+                    {
+                        State = Enum.IsDefined(typeof(PackMLState), (int)stateCode)
+                            ? (PackMLState)stateCode
+                            : PackMLState.Clearing,
+                        StateName = ReadSymbol<string>("GVL_State.sStateName"),
+                        CurrentStepIndex = ReadSymbol<ushort>("GVL_Process.nCurrentStepIndex"),
+                        CurrentStepName = ReadSymbol<string>("GVL_Process.sCurrentStepName"),
+                        TotalSteps = ReadSymbol<ushort>("GVL_Process.nTotalSteps"),
+                        StepTimeElapsed = ReadSymbol<ushort>("GVL_Process.nStepTimeElapsed_s"),
+                        StepTimeRemaining = ReadSymbol<ushort>("GVL_Process.nStepTimeRemaining_s"),
+                        Progress = ReadSymbol<float>("GVL_Process.fProgress"),
+                        ProcessDone = ReadSymbol<bool>("GVL_Process.bProcessDone"),
+                        IsHeld = ReadSymbol<bool>("GVL_State.bHeld"),
+                        ErrorCode = ReadSymbol<short>("GVL_Process.nErrorCode"),
+                        ErrorText = ReadSymbol<string>("GVL_Process.sErrorText")
+                    };
+                }
+            });
+
+            if (status != null)
+                ProcessStatusUpdated?.Invoke(this, status);
+
             return status;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading process status");
+            MarkDisconnectedOnError(ex);
             return null;
         }
     }
@@ -214,44 +266,50 @@ public class AdsService : IDisposable
 
         try
         {
-            await WriteSymbolAsync("GVL_Recipe.sRecipeName", recipe.Name);
-            await WriteSymbolAsync("GVL_Recipe.fPreparationVolume", (float)recipe.PreparationVolume);
-            await WriteSymbolAsync("GVL_Recipe.fPreparationConcentration", (float)recipe.PreparationConcentration);
-
-            // Ordered process steps (Dosage, Melange, Extraction, Cuisson, ...)
-            var steps = recipe.Steps.Take(MAX_STEPS).ToList();
-            await WriteSymbolAsync("GVL_Recipe.nNumSteps", (ushort)steps.Count);
-            for (int i = 0; i < steps.Count; i++)
+            return await Task.Run(() =>
             {
-                await WriteSymbolAsync($"GVL_Recipe.aStepNames[{i + 1}]", steps[i]);
-            }
+                lock (_lock)
+                {
+                    if (!_isConnected || _adsClient == null)
+                        return false;
 
-            // Ingredients and quantities
-            var ingredients = recipe.Ingredients.Take(MAX_INGREDIENTS).ToList();
-            await WriteSymbolAsync("GVL_Recipe.nNumIngredients", (ushort)ingredients.Count);
-            for (int i = 0; i < ingredients.Count; i++)
-            {
-                var ingredient = ingredients[i];
-                await WriteSymbolAsync($"GVL_Recipe.aIngredientName[{i + 1}]", ingredient.Name);
-                await WriteSymbolAsync($"GVL_Recipe.aIngredientQuantity[{i + 1}]", (float)ingredient.Quantity);
-                await WriteSymbolAsync($"GVL_Recipe.aIngredientVolume[{i + 1}]", (float)ingredient.Volume);
-                await WriteSymbolAsync($"GVL_Recipe.aIngredientMolarMass[{i + 1}]", (float)ingredient.MolarMass);
-            }
+                    WriteSymbol("GVL_Recipe.sRecipeName", recipe.Name);
+                    WriteSymbol("GVL_Recipe.fPreparationVolume", (float)recipe.PreparationVolume);
+                    WriteSymbol("GVL_Recipe.fPreparationConcentration", (float)recipe.PreparationConcentration);
 
-            _logger.LogInformation($"Recipe '{recipe.Name}' sent to PLC ({steps.Count} steps, {ingredients.Count} ingredients)");
-            return true;
+                    var steps = recipe.Steps.Take(MAX_STEPS).ToList();
+                    WriteSymbol("GVL_Recipe.nNumSteps", (ushort)steps.Count);
+                    for (int i = 0; i < steps.Count; i++)
+                    {
+                        WriteSymbol($"GVL_Recipe.aStepNames[{i + 1}]", steps[i]);
+                    }
+
+                    var ingredients = recipe.Ingredients.Take(MAX_INGREDIENTS).ToList();
+                    WriteSymbol("GVL_Recipe.nNumIngredients", (ushort)ingredients.Count);
+                    for (int i = 0; i < ingredients.Count; i++)
+                    {
+                        var ingredient = ingredients[i];
+                        WriteSymbol($"GVL_Recipe.aIngredientName[{i + 1}]", ingredient.Name);
+                        WriteSymbol($"GVL_Recipe.aIngredientQuantity[{i + 1}]", (float)ingredient.Quantity);
+                        WriteSymbol($"GVL_Recipe.aIngredientVolume[{i + 1}]", (float)ingredient.Volume);
+                        WriteSymbol($"GVL_Recipe.aIngredientMolarMass[{i + 1}]", (float)ingredient.MolarMass);
+                    }
+
+                    _logger.LogInformation(
+                        "Recipe '{Name}' sent to PLC ({StepCount} steps, {IngredientCount} ingredients)",
+                        recipe.Name, steps.Count, ingredients.Count);
+                    return true;
+                }
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending recipe to PLC");
+            MarkDisconnectedOnError(ex);
             return false;
         }
     }
 
-    /// <summary>
-    /// Sends a PackML command to the PLC. Reset/Clear/Start/Stop are sent as a momentary
-    /// pulse (TRUE then FALSE); Hold toggles a level signal that pauses/resumes the active step.
-    /// </summary>
     public async Task<bool> SendCommandAsync(PackMLCommand command)
     {
         if (!_isConnected || _adsClient == null)
@@ -261,9 +319,15 @@ public class AdsService : IDisposable
         {
             if (command == PackMLCommand.Hold)
             {
-                _isHeld = !_isHeld;
-                await WriteSymbolAsync("GVL_Command.bHold", _isHeld);
-                _logger.LogInformation($"Hold set to {_isHeld}");
+                await Task.Run(() =>
+                {
+                    lock (_lock)
+                    {
+                        _isHeld = !_isHeld;
+                        WriteSymbol("GVL_Command.bHold", _isHeld);
+                    }
+                });
+                _logger.LogInformation("Hold set to {Held}", _isHeld);
                 return true;
             }
 
@@ -276,82 +340,197 @@ public class AdsService : IDisposable
                 _ => throw new ArgumentOutOfRangeException(nameof(command))
             };
 
-            await WriteSymbolAsync(symbolName, true);
+            await Task.Run(() =>
+            {
+                lock (_lock)
+                {
+                    WriteSymbol(symbolName, true);
+                }
+            });
             await Task.Delay(COMMAND_PULSE_MS);
-            await WriteSymbolAsync(symbolName, false);
+            await Task.Run(() =>
+            {
+                lock (_lock)
+                {
+                    WriteSymbol(symbolName, false);
+                }
+            });
 
-            _logger.LogInformation($"PackML command {command} sent");
+            _logger.LogInformation("PackML command {Command} sent", command);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error sending PackML command {command}");
+            _logger.LogError(ex, "Error sending PackML command {Command}", command);
+            MarkDisconnectedOnError(ex);
             return false;
         }
     }
 
-    private async Task<T> ReadSymbolAsync<T>(string symbolName)
+    private void EnsureReconnectLoop()
     {
-        if (_adsClient == null)
-            throw new InvalidOperationException("ADS client not connected");
+        if (!_autoReconnectEnabled || _disposed)
+            return;
 
-        return await Task.Run(() =>
-        {
-            var handle = _adsClient.CreateVariableHandle(symbolName);
-            try
-            {
-                if (typeof(T) == typeof(string))
-                {
-                    var bytes = new byte[ADS_STRING_BUFFER_SIZE];
-                    _adsClient.Read(handle, bytes);
-                    var str = Encoding.ASCII.GetString(bytes).TrimEnd('\0');
-                    return (T)(object)str;
-                }
-                else
-                {
-                    return (T)_adsClient.ReadAny(handle, typeof(T));
-                }
-            }
-            finally
-            {
-                _adsClient.DeleteVariableHandle(handle);
-            }
-        });
+        if (_reconnectLoop is { IsCompleted: false })
+            return;
+
+        _reconnectLoop = Task.Run(() => ReconnectLoopAsync(_reconnectCts.Token));
     }
 
-    private async Task WriteSymbolAsync<T>(string symbolName, T value)
+    private async Task ReconnectLoopAsync(CancellationToken cancellationToken)
+    {
+        var interval = Math.Max(500, _options.ReconnectIntervalMs);
+
+        while (!cancellationToken.IsCancellationRequested && !_disposed)
+        {
+            try
+            {
+                if (!_manualDisconnect && !_isConnected && _autoReconnectEnabled)
+                {
+                    _logger.LogDebug("ADS auto-reconnect attempt to {AmsNetId}:{Port}", _amsNetId, _amsPort);
+                    TryConnect(_amsNetId, _amsPort);
+                }
+
+                await Task.Delay(interval, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ADS reconnect loop");
+                await Task.Delay(interval, CancellationToken.None);
+            }
+        }
+    }
+
+    private void MarkDisconnectedOnError(Exception ex)
+    {
+        lock (_lock)
+        {
+            if (!_isConnected)
+                return;
+
+            _logger.LogWarning(ex, "ADS connection lost");
+            DisconnectInternal(notify: true);
+        }
+
+        if (_autoReconnectEnabled && !_manualDisconnect)
+            EnsureReconnectLoop();
+    }
+
+    private void DisconnectInternal(bool notify)
+    {
+        try
+        {
+            if (_adsClient != null)
+            {
+                try { _adsClient.Disconnect(); } catch { /* ignore */ }
+                // Do NOT Dispose the AdsClient here — reuse it like IOMasterAds
+            }
+        }
+        finally
+        {
+            var wasConnected = _isConnected;
+            _isConnected = false;
+            if (notify)
+                ConnectionStateChanged?.Invoke(this, EventArgs.Empty);
+            else if (wasConnected)
+                ConnectionStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private T ReadSymbol<T>(string symbolName)
     {
         if (_adsClient == null)
             throw new InvalidOperationException("ADS client not connected");
 
-        await Task.Run(() =>
+        var handle = _adsClient.CreateVariableHandle(symbolName);
+        try
         {
-            var handle = _adsClient.CreateVariableHandle(symbolName);
-            try
+            if (typeof(T) == typeof(string))
             {
-                if (typeof(T) == typeof(string))
-                {
-                    var str = value?.ToString() ?? string.Empty;
-                    var bytes = new byte[ADS_STRING_BUFFER_SIZE];
-                    var strBytes = Encoding.ASCII.GetBytes(str);
-                    Array.Copy(strBytes, bytes, Math.Min(strBytes.Length, ADS_STRING_MAX_LENGTH));
-                    _adsClient.Write(handle, bytes);
-                }
-                else if (value != null)
-                {
-                    _adsClient.WriteAny(handle, value);
-                }
+                var bytes = new byte[ADS_STRING_BUFFER_SIZE];
+                _adsClient.Read(handle, bytes);
+                var str = Encoding.ASCII.GetString(bytes).TrimEnd('\0');
+                return (T)(object)str;
             }
-            finally
+
+            return (T)_adsClient.ReadAny(handle, typeof(T));
+        }
+        finally
+        {
+            _adsClient.DeleteVariableHandle(handle);
+        }
+    }
+
+    private void WriteSymbol<T>(string symbolName, T value)
+    {
+        if (_adsClient == null)
+            throw new InvalidOperationException("ADS client not connected");
+
+        var handle = _adsClient.CreateVariableHandle(symbolName);
+        try
+        {
+            if (typeof(T) == typeof(string))
             {
-                _adsClient.DeleteVariableHandle(handle);
+                var str = value?.ToString() ?? string.Empty;
+                var bytes = new byte[ADS_STRING_BUFFER_SIZE];
+                var strBytes = Encoding.ASCII.GetBytes(str);
+                Array.Copy(strBytes, bytes, Math.Min(strBytes.Length, ADS_STRING_MAX_LENGTH));
+                _adsClient.Write(handle, bytes);
             }
-        });
+            else if (value != null)
+            {
+                _adsClient.WriteAny(handle, value);
+            }
+        }
+        finally
+        {
+            _adsClient.DeleteVariableHandle(handle);
+        }
+    }
+
+    private static string BuildFriendlyAdsError(Exception ex, string? amsNetId, int amsPort)
+    {
+        var message = ex.Message ?? string.Empty;
+
+        if (message.Contains("ClientPortNotOpen", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("ConnectPortFailed", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Cannot register AmsPort", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("LoopbackNotRegistered", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("actively refused", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+                $"Cannot reach TwinCAT ADS router for {amsNetId}:{amsPort}. " +
+                "Ensure UmRT/TwinCAT is in Run mode and port 48898 is listening " +
+                "(only one TcSystemServiceUm). Raw: " + message;
+        }
+
+        return $"ADS connection to {amsNetId}:{amsPort} failed: {message}";
     }
 
     public void Dispose()
     {
-        Disconnect();
-        _adsClient?.Dispose();
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        _manualDisconnect = true;
+        _autoReconnectEnabled = false;
+
+        try { _reconnectCts.Cancel(); } catch { /* ignore */ }
+        try { _reconnectLoop?.Wait(TimeSpan.FromSeconds(2)); } catch { /* ignore */ }
+        _reconnectCts.Dispose();
+
+        lock (_lock)
+        {
+            try { _adsClient?.Disconnect(); } catch { /* ignore */ }
+            try { _adsClient?.Dispose(); } catch { /* ignore */ }
+            _adsClient = null;
+            _isConnected = false;
+        }
     }
 }

@@ -9,22 +9,23 @@
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 12px 20px;
-    color: #495057;
+    padding: 14px 20px;
+    min-height: 48px;
+    color: #c5d0e0;
     text-decoration: none;
     transition: all 0.2s ease;
     border-left: 3px solid transparent;
 }
 
 .nav-link:hover {
-    background-color: #f8f9fa;
-    color: #228be6;
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #74c0fc;
 }
 
 .nav-link.active {
-    background-color: #e7f5ff;
-    color: #228be6;
-    border-left-color: #228be6;
+    background-color: rgba(28, 126, 214, 0.18);
+    color: #a5d8ff;
+    border-left-color: #1c7ed6;
     font-weight: 600;
 }
 

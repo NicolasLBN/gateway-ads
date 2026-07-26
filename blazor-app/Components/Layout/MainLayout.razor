@@ -1,57 +1,69 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@using BlazorApp.Services
+@using BlazorApp.Models
+@inject AppStateService AppState
 
 <div class="page">
-    <header class="app-header">
-        <div class="header-content">
-            <h1 class="app-title">Industrial Application - Gateway ADS</h1>
-            <div class="header-right">
-                @if (AppState.IsConnected)
-                {
-                    <span class="connection-badge connected">● Connected</span>
-                }
-                else
-                {
-                    <span class="connection-badge disconnected">● Disconnected</span>
-                }
+    <header class="topbar">
+        <div class="brand">
+            <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/>
+            </svg>
+            <div>
+                <div class="brand-title">Gateway ADS</div>
+                <div class="brand-sub">Recipe Manager HMI</div>
             </div>
         </div>
+        <nav class="topnav">
+            <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
+            <NavLink href="/new-recipe">Recipe</NavLink>
+            <NavLink href="/cooking">Cooking</NavLink>
+            <NavLink href="/favorites">Favorites</NavLink>
+            <NavLink href="/history">History</NavLink>
+            <NavLink href="/machine-settings">Settings</NavLink>
+        </nav>
     </header>
 
-    <div class="main-container">
-        <div class="sidebar">
-            <NavMenu />
-        </div>
+    <main class="content">
+        @Body
+    </main>
 
-        <main>
-            <article class="content">
-                @Body
-            </article>
-        </main>
-    </div>
+    <footer class="status-footer">
+        <div class="footer-plc-states">
+            <span class="footer-label">PLC</span>
+            <span class="state-chip @(IsState(PackMLState.Stopped) ? "active stopped" : "")">Stopped</span>
+            <span class="state-chip @(IsState(PackMLState.Idle) ? "active idle" : "")">Idle</span>
+            <span class="state-chip @(IsState(PackMLState.Execute) ? "active execute" : "")">Execute</span>
+            @if (CurrentState is PackMLState s && s is not (PackMLState.Stopped or PackMLState.Idle or PackMLState.Execute))
+            {
+                <span class="state-chip active other">@s</span>
+            }
+        </div>
+        <div class="footer-connection @(AppState.IsConnected ? "online" : "offline")">
+            <span class="conn-dot"></span>
+            <span>@(AppState.IsConnected ? "HMI connected to PLC" : "HMI offline — PLC disconnected")</span>
+        </div>
+    </footer>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
+<div id="blazor-error-ui">
     An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
 </div>
 
 @code {
-    @inject BlazorApp.Services.AppStateService AppState
+    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
+
+    private bool IsState(PackMLState state) => CurrentState == state;
 
     protected override void OnInitialized()
     {
         AppState.StateChanged += OnStateChanged;
     }
 
-    private void OnStateChanged()
-    {
-        InvokeAsync(StateHasChanged);
-    }
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
-    {
-        AppState.StateChanged -= OnStateChanged;
-    }
+    public void Dispose() => AppState.StateChanged -= OnStateChanged;
 }
-

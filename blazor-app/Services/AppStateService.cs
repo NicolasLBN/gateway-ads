@@ -21,6 +21,12 @@ public class AppStateService
     {
         _adsService = adsService;
         _adsService.ProcessStatusUpdated += OnProcessStatusUpdated;
+        _adsService.ConnectionStateChanged += OnConnectionStateChanged;
+    }
+
+    private void OnConnectionStateChanged(object? sender, EventArgs e)
+    {
+        NotifyStateChanged();
     }
 
     public void SetSelectedMachine(Machine machine)

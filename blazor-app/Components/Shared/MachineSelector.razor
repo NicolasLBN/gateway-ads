@@ -7,40 +7,45 @@
     <h3>Machine Connection</h3>
 
     <p class="config-hint">
-        Target is fixed in <code>appsettings.json</code> (section <code>ADS</code>).
-        Change Net ID / port there, then restart the app.
+        Connected at startup from <code>appsettings.json</code> (ThermalWinch PreBuild style).
+        Change AMS Net ID / port there, then restart the app.
     </p>
 
     <div class="machine-details">
         <p><strong>Name:</strong> @AdsService.ConfiguredTarget.MachineName</p>
         <p><strong>AMS Net ID:</strong> @AdsService.ConfiguredTarget.AmsNetId</p>
         <p><strong>AMS Port:</strong> @AdsService.ConfiguredTarget.AmsPort</p>
+        <p><strong>AutoReconnect:</strong> @AdsService.ConfiguredTarget.AutoReconnect</p>
+        <p>
+            <strong>Status:</strong>
+            @if (AppState.IsConnected)
+            {
+                <span class="status-ok">Connected</span>
+            }
+            else
+            {
+                <span class="status-ko">Disconnected / reconnecting…</span>
+            }
+        </p>
     </div>
 
-    @if (error != null)
+    @if (!AppState.IsConnected && !string.IsNullOrEmpty(AdsService.LastError))
     {
         <div class="alert alert-danger">
-            @error
+            @AdsService.LastError
         </div>
     }
 
     <div class="button-group">
         @if (!AppState.IsConnected)
         {
-            <button class="btn btn-primary" @onclick="Connect" disabled="@isConnecting">
-                @if (isConnecting)
-                {
-                    <span>Connecting...</span>
-                }
-                else
-                {
-                    <span>Connect (from config)</span>
-                }
+            <button class="btn btn-primary" @onclick="Reconnect" disabled="@isBusy">
+                @(isBusy ? "Connecting..." : "Reconnect now")
             </button>
         }
         else
         {
-            <button class="btn btn-danger" @onclick="Disconnect">
+            <button class="btn btn-danger" @onclick="Disconnect" disabled="@isBusy">
                 Disconnect
             </button>
         }
@@ -48,8 +53,7 @@
 </div>
 
 @code {
-    private bool isConnecting;
-    private string? error;
+    private bool isBusy;
 
     protected override void OnInitialized()
     {
@@ -61,40 +65,26 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task Connect()
+    private async Task Reconnect()
     {
-        isConnecting = true;
-        error = null;
-
+        isBusy = true;
         try
         {
+            AdsService.Reset();
+            await AdsService.ConnectFromConfigAsync();
             var cfg = AdsService.ConfiguredTarget;
-            var success = await AdsService.ConnectFromConfigAsync();
-
-            if (success)
+            AppState.SetSelectedMachine(new Machine
             {
-                AppState.SetSelectedMachine(new Machine
-                {
-                    Id = "config",
-                    Name = cfg.MachineName,
-                    AmsNetId = cfg.AmsNetId,
-                    AmsPort = cfg.AmsPort,
-                    Description = "Loaded from appsettings.json"
-                });
-            }
-            else
-            {
-                error = AdsService.LastError
-                    ?? "Failed to connect to PLC. Please check that TwinCAT is running in Run Mode.";
-            }
-        }
-        catch (Exception ex)
-        {
-            error = $"Connection error: {ex.Message}";
+                Id = "config",
+                Name = cfg.MachineName,
+                AmsNetId = cfg.AmsNetId,
+                AmsPort = cfg.AmsPort,
+                Description = "Loaded from appsettings.json"
+            });
         }
         finally
         {
-            isConnecting = false;
+            isBusy = false;
         }
     }
 
@@ -144,6 +134,16 @@
 
     .machine-details p {
         margin: 5px 0;
+    }
+
+    .status-ok {
+        color: #2b8a3e;
+        font-weight: 600;
+    }
+
+    .status-ko {
+        color: #c92a2a;
+        font-weight: 600;
     }
 
     .button-group {

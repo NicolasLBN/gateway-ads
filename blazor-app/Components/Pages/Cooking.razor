@@ -1,0 +1,226 @@
+@page "/cooking"
+@rendermode InteractiveServer
+@implements IDisposable
+@using BlazorApp.Components.Shared
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject AppStateService AppState
+@inject ReportService ReportService
+@inject PdfService PdfService
+@inject NavigationManager Navigation
+
+<PageTitle>Cooking</PageTitle>
+
+<div class="cooking-page">
+    <div class="page-toolbar">
+        <a href="/new-recipe" class="link-back">Recipe details</a>
+        <h1 class="page-title">Cooking</h1>
+    </div>
+
+    @if (AppState.CurrentRecipe == null)
+    {
+        <div class="alert alert-warn">
+            No recipe loaded. Configure and send a recipe first.
+            <a href="/new-recipe" class="alert-link">Open recipe details</a>
+        </div>
+    }
+    else
+    {
+        <div class="recipe-summary">
+            <div>
+                <span class="label">Recipe</span>
+                <strong>@AppState.CurrentRecipe.Name</strong>
+            </div>
+            <div>
+                <span class="label">Steps</span>
+                <strong>@AppState.CurrentRecipe.Steps.Count</strong>
+            </div>
+            <div>
+                <span class="label">Ingredients</span>
+                <strong>@AppState.CurrentRecipe.Ingredients.Count</strong>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">
+            @error
+            <button class="alert-close" @onclick="() => error = null">×</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(success))
+    {
+        <div class="alert alert-success">
+            @success
+            <button class="alert-close" @onclick="() => success = null">×</button>
+        </div>
+    }
+
+    <div class="cooking-grid">
+        <div class="panel controls-panel">
+            <div class="state-banner state-@StateCssClass">
+                <span class="state-label">PLC STATE</span>
+                <span class="state-value">@CurrentStateName</span>
+                <span class="state-hint">@OperatorHint</span>
+            </div>
+
+            <div class="control-row">
+                <button class="btn btn-run btn-touch" @onclick="RunCooking" disabled="@(!CanStart || isBusy)" title="@StartTooltip">
+                    Run cooking
+                </button>
+                <button class="btn btn-hold btn-touch" @onclick='() => SendCommand(PackMLCommand.Hold)' disabled="@(!CanHold || isBusy)">
+                    @(AppState.LatestProcessStatus?.IsHeld == true ? "Resume" : "Hold")
+                </button>
+                <button class="btn btn-stop btn-touch" @onclick='() => SendCommand(PackMLCommand.Stop)' disabled="@(!CanStop || isBusy)">
+                    Stop
+                </button>
+            </div>
+            <div class="control-row secondary">
+                <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Reset)' disabled="@(!CanReset || isBusy)">
+                    Reset
+                </button>
+                <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Clear)' disabled="@(!CanClear || isBusy)">
+                    Clear
+                </button>
+            </div>
+
+            @if (AppState.LatestProcessStatus?.State == PackMLState.Complete)
+            {
+                <button class="btn btn-primary btn-touch full" @onclick="GenerateReport">
+                    Generate PDF report
+                </button>
+            }
+        </div>
+
+        <div class="panel">
+            <ProcessTimeline />
+        </div>
+    </div>
+
+    <div class="chart-wrap">
+        <RealtimeChart />
+    </div>
+</div>
+
+@code {
+    private bool isBusy;
+    private string? error;
+    private string? success;
+
+    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
+    private string CurrentStateName => AppState.LatestProcessStatus?.StateName
+        ?? (AppState.IsConnected ? "Waiting…" : "Offline");
+
+    private bool CanStart => AppState.IsConnected && CurrentState == PackMLState.Idle && AppState.CurrentRecipe != null;
+    private bool CanStop => AppState.IsConnected && CurrentState is PackMLState.Execute or PackMLState.Starting;
+    private bool CanHold => AppState.IsConnected && CurrentState == PackMLState.Execute;
+    private bool CanReset => AppState.IsConnected && CurrentState is PackMLState.Stopped or PackMLState.Complete;
+    private bool CanClear => AppState.IsConnected && CurrentState == PackMLState.Stopped;
+
+    private string StateCssClass => (CurrentState ?? PackMLState.Stopped) switch
+    {
+        PackMLState.Execute or PackMLState.Starting or PackMLState.Completing => "run",
+        PackMLState.Idle => "idle",
+        PackMLState.Complete => "complete",
+        PackMLState.Stopped or PackMLState.Clearing or PackMLState.Resetting => "stopped",
+        _ => "neutral"
+    };
+
+    private string OperatorHint => CurrentState switch
+    {
+        null when !AppState.IsConnected => "HMI offline — connect to PLC.",
+        PackMLState.Stopped => "Stopped. Press Reset, then Run cooking.",
+        PackMLState.Idle => "Idle — ready to run cooking.",
+        PackMLState.Execute => AppState.LatestProcessStatus?.IsHeld == true ? "Held — press Resume." : "Executing recipe steps.",
+        PackMLState.Complete => "Complete — generate report or Reset for next batch.",
+        _ => string.Empty
+    };
+
+    private string StartTooltip => CanStart
+        ? "Start PackML Execute cycle"
+        : CurrentState == PackMLState.Stopped
+            ? "PLC is Stopped. Press Reset first."
+            : $"Run only from Idle (current: {CurrentStateName})";
+
+    protected override void OnInitialized()
+    {
+        AppState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task RunCooking()
+    {
+        if (!CanStart)
+        {
+            error = StartTooltip;
+            return;
+        }
+
+        await SendCommand(PackMLCommand.Start);
+    }
+
+    private async Task SendCommand(PackMLCommand command)
+    {
+        if (!AppState.IsConnected)
+        {
+            error = "HMI is not connected to the PLC.";
+            return;
+        }
+
+        isBusy = true;
+        error = null;
+        try
+        {
+            var ok = await AppState.SendCommandAsync(command);
+            success = ok ? $"Command {command} sent." : $"Failed to send {command}.";
+            if (!ok) error = success;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task GenerateReport()
+    {
+        var recipe = AppState.CurrentRecipe;
+        if (recipe == null) return;
+
+        try
+        {
+            var report = new Report
+            {
+                RecipeName = recipe.Name,
+                MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
+                Date = DateTime.Now,
+                Products = recipe.Ingredients.ToList(),
+                Steps = AppState.CurrentStepTimeline.Select(s => new ProcessStep
+                {
+                    Name = s.StepName,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime ?? s.StartTime,
+                    DurationSeconds = s.DurationSeconds
+                }).ToList()
+            };
+
+            ReportService.AddReport(report);
+            PdfService.GenerateReport(report);
+            success = "Report generated.";
+            await Task.Delay(1200);
+            Navigation.NavigateTo("/history");
+        }
+        catch (Exception ex)
+        {
+            error = $"Report error: {ex.Message}";
+        }
+    }
+
+    public void Dispose() => AppState.StateChanged -= OnStateChanged;
+}
