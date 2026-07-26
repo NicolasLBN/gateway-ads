@@ -10,7 +10,6 @@
 <div class="history-page">
     <div class="page-header">
         <h1 class="page-title">Recipe History</h1>
-        <a href="/" class="btn-back">← Back to Home</a>
     </div>
 
     @if (reports.Count == 0)
@@ -93,20 +92,6 @@
         font-weight: 700;
         color: #212529;
         margin: 0;
-    }
-
-    .btn-back {
-        padding: 10px 20px;
-        background-color: #61db34;
-        color: white;
-        text-decoration: none;
-        border-radius: 6px;
-        font-weight: 500;
-        transition: background-color 0.2s;
-    }
-
-    .btn-back:hover {
-        background-color: #4fb828;
     }
 
     .empty-state {

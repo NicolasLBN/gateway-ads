@@ -19,6 +19,8 @@ builder.Services.AddSingleton<MachineService>();
 builder.Services.AddSingleton<ReportService>();
 builder.Services.AddSingleton<PdfService>();
 builder.Services.AddSingleton<FavoritesService>();
+builder.Services.AddSingleton<AuthService>();
+builder.Services.AddScoped<AuthSessionService>();
 
 // Add background service for PLC polling
 builder.Services.AddHostedService<PlcPollingService>();

@@ -1,5 +1,7 @@
 @page "/"
 @rendermode InteractiveServer
+@using BlazorApp.Services
+@inject AppStateService AppState
 
 <PageTitle>Home</PageTitle>
 
@@ -39,7 +41,7 @@
             </span>
             <span class="tile-body">
                 <span class="tile-title">Cooking</span>
-                <span class="tile-desc">Run process, monitor timeline and status</span>
+                <span class="tile-desc">Run process and monitor live step progress</span>
             </span>
         </a>
 
@@ -74,3 +76,16 @@
         </a>
     </section>
 </div>
+
+@code {
+    private bool _commandSent;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _commandSent || !AppState.IsConnected)
+            return;
+
+        _commandSent = true;
+        await AppState.EnsureStoppedAsync();
+    }
+}

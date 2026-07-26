@@ -58,49 +58,23 @@
         </div>
     }
 
-    <div class="cooking-grid">
-        <div class="panel controls-panel">
-            <div class="state-banner state-@StateCssClass">
-                <span class="state-label">PLC STATE</span>
-                <span class="state-value">@CurrentStateName</span>
-                <span class="state-hint">@OperatorHint</span>
-            </div>
-
-            <div class="control-row">
-                <button class="btn btn-run btn-touch" @onclick="RunCooking" disabled="@(!CanStart || isBusy)" title="@StartTooltip">
-                    Run cooking
-                </button>
-                <button class="btn btn-hold btn-touch" @onclick='() => SendCommand(PackMLCommand.Hold)' disabled="@(!CanHold || isBusy)">
-                    @(AppState.LatestProcessStatus?.IsHeld == true ? "Resume" : "Hold")
-                </button>
-                <button class="btn btn-stop btn-touch" @onclick='() => SendCommand(PackMLCommand.Stop)' disabled="@(!CanStop || isBusy)">
-                    Stop
-                </button>
-            </div>
-            <div class="control-row secondary">
-                <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Reset)' disabled="@(!CanReset || isBusy)">
-                    Reset
-                </button>
-                <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Clear)' disabled="@(!CanClear || isBusy)">
-                    Clear
-                </button>
-            </div>
-
-            @if (AppState.LatestProcessStatus?.State == PackMLState.Complete)
-            {
-                <button class="btn btn-primary btn-touch full" @onclick="GenerateReport">
-                    Generate PDF report
-                </button>
-            }
-        </div>
-
-        <div class="panel">
-            <ProcessTimeline />
-        </div>
+    <div class="live-wrap">
+        <RealtimeChart />
     </div>
 
-    <div class="chart-wrap">
-        <RealtimeChart />
+    <div class="tools-row">
+        <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Reset)' disabled="@(!CanReset || isBusy)">
+            Reset
+        </button>
+        <button class="btn btn-secondary btn-touch" @onclick='() => SendCommand(PackMLCommand.Clear)' disabled="@(!CanClear || isBusy)">
+            Clear
+        </button>
+        @if (AppState.LatestProcessStatus?.State == PackMLState.Complete)
+        {
+            <button class="btn btn-primary btn-touch" @onclick="GenerateReport">
+                Generate PDF report
+            </button>
+        }
     </div>
 </div>
 
@@ -110,39 +84,8 @@
     private string? success;
 
     private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
-    private string CurrentStateName => AppState.LatestProcessStatus?.StateName
-        ?? (AppState.IsConnected ? "Waiting…" : "Offline");
-
-    private bool CanStart => AppState.IsConnected && CurrentState == PackMLState.Idle && AppState.CurrentRecipe != null;
-    private bool CanStop => AppState.IsConnected && CurrentState is PackMLState.Execute or PackMLState.Starting;
-    private bool CanHold => AppState.IsConnected && CurrentState == PackMLState.Execute;
     private bool CanReset => AppState.IsConnected && CurrentState is PackMLState.Stopped or PackMLState.Complete;
     private bool CanClear => AppState.IsConnected && CurrentState == PackMLState.Stopped;
-
-    private string StateCssClass => (CurrentState ?? PackMLState.Stopped) switch
-    {
-        PackMLState.Execute or PackMLState.Starting or PackMLState.Completing => "run",
-        PackMLState.Idle => "idle",
-        PackMLState.Complete => "complete",
-        PackMLState.Stopped or PackMLState.Clearing or PackMLState.Resetting => "stopped",
-        _ => "neutral"
-    };
-
-    private string OperatorHint => CurrentState switch
-    {
-        null when !AppState.IsConnected => "HMI offline — connect to PLC.",
-        PackMLState.Stopped => "Stopped. Press Reset, then Run cooking.",
-        PackMLState.Idle => "Idle — ready to run cooking.",
-        PackMLState.Execute => AppState.LatestProcessStatus?.IsHeld == true ? "Held — press Resume." : "Executing recipe steps.",
-        PackMLState.Complete => "Complete — generate report or Reset for next batch.",
-        _ => string.Empty
-    };
-
-    private string StartTooltip => CanStart
-        ? "Start PackML Execute cycle"
-        : CurrentState == PackMLState.Stopped
-            ? "PLC is Stopped. Press Reset first."
-            : $"Run only from Idle (current: {CurrentStateName})";
 
     protected override void OnInitialized()
     {
@@ -150,17 +93,6 @@
     }
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
-
-    private async Task RunCooking()
-    {
-        if (!CanStart)
-        {
-            error = StartTooltip;
-            return;
-        }
-
-        await SendCommand(PackMLCommand.Start);
-    }
 
     private async Task SendCommand(PackMLCommand command)
     {

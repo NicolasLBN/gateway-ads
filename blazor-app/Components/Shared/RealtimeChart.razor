@@ -1,178 +1,222 @@
+@implements IDisposable
 @using BlazorApp.Models
 @using BlazorApp.Services
 @inject AppStateService AppState
 
-<div class="realtime-chart-card">
-    <h3>Live Step Progress</h3>
+<div class="live-step">
+    <div class="live-header">
+        <h3>Live step progress</h3>
+        <span class="state-pill state-@StateCss">@StateName</span>
+    </div>
 
-    @if (!AppState.IsConnected || AppState.LatestProcessStatus == null)
+    @if (!AppState.IsConnected)
     {
-        <div class="chart-empty">
-            <p>No data available. Connect to a machine and start a process to see live step progress.</p>
-        </div>
+        <div class="live-empty">HMI offline — connect to the PLC to run cooking.</div>
     }
     else
     {
         var process = AppState.LatestProcessStatus;
-        var fraction = process.State == PackMLState.Execute
-            ? Math.Clamp(1.0 - (process.StepTimeRemaining / 15.0), 0.0, 1.0)
-            : 0.0;
-        var dashOffset = Circumference * (1 - fraction);
+        var stepFraction = GetStepFraction(process);
+        var overallPct = process != null ? (process.Progress * 100) : 0;
+        var dashOffset = Circumference * (1 - stepFraction);
 
-        <div class="countdown-section">
-            <svg width="160" height="160" viewBox="0 0 160 160">
-                <circle cx="80" cy="80" r="70" fill="none" stroke="#e9ecef" stroke-width="12" />
-                <circle cx="80" cy="80" r="70" fill="none" stroke="#228be6" stroke-width="12"
-                        stroke-dasharray="@Circumference" stroke-dashoffset="@dashOffset"
-                        stroke-linecap="round" transform="rotate(-90 80 80)" />
-                <text x="80" y="75" text-anchor="middle" font-size="28" font-weight="700" fill="#212529">
-                    @process.StepTimeRemaining s
-                </text>
-                <text x="80" y="98" text-anchor="middle" font-size="12" fill="#868e96">
-                    remaining
-                </text>
-            </svg>
-            <div class="countdown-label">
-                @(string.IsNullOrEmpty(process.CurrentStepName) ? "No active step" : process.CurrentStepName)
+        <div class="live-main">
+            <div class="ring-block">
+                <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
+                    <circle class="ring-track" cx="90" cy="90" r="78" />
+                    <circle class="ring-fill @(process?.IsHeld == true ? "held" : "")"
+                            cx="90" cy="90" r="78"
+                            stroke-dasharray="@Circumference"
+                            stroke-dashoffset="@dashOffset"
+                            transform="rotate(-90 90 90)" />
+                    <text class="ring-time" x="90" y="82" text-anchor="middle">
+                        @(process?.State == PackMLState.Execute ? $"{process.StepTimeRemaining}s" : "—")
+                    </text>
+                    <text class="ring-caption" x="90" y="104" text-anchor="middle">
+                        @(process?.IsHeld == true ? "held" : "remaining")
+                    </text>
+                </svg>
+                <div class="current-step-name">
+                    @if (process?.State == PackMLState.Execute && !string.IsNullOrEmpty(process.CurrentStepName))
+                    {
+                        <span>@process.CurrentStepName</span>
+                        <span class="step-index">@process.CurrentStepIndex / @process.TotalSteps</span>
+                    }
+                    else if (process?.State == PackMLState.Complete)
+                    {
+                        <span>Process complete</span>
+                    }
+                    else
+                    {
+                        <span>@(string.IsNullOrEmpty(process?.CurrentStepName) ? "Waiting for start" : process!.CurrentStepName)</span>
+                    }
+                </div>
             </div>
-        </div>
 
-        <div class="chart-title">Step Durations (target: 15s)</div>
-        @if (AppState.CurrentStepTimeline.Count == 0)
-        {
-            <div class="chart-empty small">
-                <p>No steps executed yet in this run.</p>
-            </div>
-        }
-        else
-        {
-            <div class="bars">
-                @foreach (var step in AppState.CurrentStepTimeline)
-                {
-                    var barHeight = Math.Min(100, (step.DurationSeconds / 15.0) * 100);
-                    <div class="bar-item">
-                        <div class="bar-track">
-                            <div class="bar-fill" style="height: @(barHeight.ToString("F0"))%"></div>
-                        </div>
-                        <div class="bar-value">@step.DurationSeconds.ToString("F0")s</div>
-                        <div class="bar-label">@step.StepName</div>
+            <div class="live-side">
+                <div class="overall">
+                    <div class="overall-labels">
+                        <span>Overall progress</span>
+                        <span>@overallPct.ToString("F0")%</span>
                     </div>
+                    <div class="overall-track">
+                        <div class="overall-fill" style="width: @(overallPct.ToString("F1"))%"></div>
+                    </div>
+                </div>
+
+                <div class="step-rail">
+                    @for (var i = 0; i < StepNames.Count; i++)
+                    {
+                        var n = i + 1;
+                        var css = GetStepCss(n, process);
+                        <div class="step-rail-item @css">
+                            <span class="step-dot">@n</span>
+                            <span class="step-rail-label">@StepNames[i]</span>
+                        </div>
+                    }
+                    @if (StepNames.Count == 0)
+                    {
+                        <p class="hint">Send a recipe to load process steps.</p>
+                    }
+                </div>
+
+                <div class="control-row">
+                    <button type="button" class="btn btn-run" @onclick="RunCooking" disabled="@(!CanStart || isBusy)" title="@StartTooltip">
+                        Run cooking
+                    </button>
+                    <button type="button" class="btn btn-hold" @onclick="HoldOrResume" disabled="@(!CanHold || isBusy)">
+                        @(process?.IsHeld == true ? "Resume" : "Hold")
+                    </button>
+                    <button type="button" class="btn btn-stop" @onclick="StopCooking" disabled="@(!CanStop || isBusy)">
+                        Stop
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(commandMessage))
+                {
+                    <div class="cmd-msg @(commandIsError ? "err" : "ok")">@commandMessage</div>
                 }
             </div>
-        }
+        </div>
     }
 </div>
 
 @code {
-    private const double Circumference = 2 * Math.PI * 70;
+    private const double Circumference = 2 * Math.PI * 78;
+    private bool isBusy;
+    private string? commandMessage;
+    private bool commandIsError;
+
+    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
+    private string StateName => AppState.LatestProcessStatus?.StateName
+        ?? (AppState.IsConnected ? "Waiting…" : "Offline");
+
+    private string StateCss => (CurrentState ?? PackMLState.Stopped) switch
+    {
+        PackMLState.Execute or PackMLState.Starting or PackMLState.Completing => "run",
+        PackMLState.Idle => "idle",
+        PackMLState.Complete => "complete",
+        PackMLState.Stopped or PackMLState.Clearing or PackMLState.Resetting => "stopped",
+        _ => "neutral"
+    };
+
+    private bool CanStart => AppState.IsConnected && CurrentState == PackMLState.Idle && AppState.CurrentRecipe != null;
+    private bool CanStop => AppState.IsConnected && CurrentState is PackMLState.Execute or PackMLState.Starting or PackMLState.Completing;
+    private bool CanHold => AppState.IsConnected && CurrentState == PackMLState.Execute;
+
+    private string StartTooltip => CanStart
+        ? "Start PackML Execute cycle"
+        : CurrentState == PackMLState.Stopped
+            ? "PLC is Stopped. Reset from Cooking tools first."
+            : $"Run only from Idle (current: {StateName})";
+
+    private List<string> StepNames
+    {
+        get
+        {
+            if (AppState.CurrentRecipe?.Steps.Count > 0)
+                return AppState.CurrentRecipe.Steps;
+            if (AppState.LatestProcessStatus?.TotalSteps > 0)
+                return Enumerable.Range(1, AppState.LatestProcessStatus.TotalSteps).Select(i => $"Step {i}").ToList();
+            return new List<string>();
+        }
+    }
 
     protected override void OnInitialized()
     {
         AppState.StateChanged += OnStateChanged;
     }
 
-    private void OnStateChanged()
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private static double GetStepFraction(ProcessStatus? process)
     {
-        InvokeAsync(StateHasChanged);
+        if (process == null || process.State != PackMLState.Execute)
+            return 0;
+
+        if (process.StepTimeElapsed + process.StepTimeRemaining > 0)
+        {
+            var total = (double)(process.StepTimeElapsed + process.StepTimeRemaining);
+            return Math.Clamp(process.StepTimeElapsed / total, 0, 1);
+        }
+
+        return Math.Clamp(1.0 - (process.StepTimeRemaining / 15.0), 0, 1);
     }
 
-    public void Dispose()
+    private static string GetStepCss(int stepNumber, ProcessStatus? process)
     {
-        AppState.StateChanged -= OnStateChanged;
+        if (process == null) return "";
+        if (process.State is PackMLState.Completing or PackMLState.Complete)
+            return "done";
+        if (process.State == PackMLState.Execute && stepNumber == process.CurrentStepIndex)
+            return process.IsHeld ? "active held" : "active";
+        if (stepNumber < process.CurrentStepIndex)
+            return "done";
+        return "";
     }
+
+    private async Task RunCooking()
+    {
+        if (!CanStart)
+        {
+            ShowMsg(StartTooltip, true);
+            return;
+        }
+        await Send(PackMLCommand.Start);
+    }
+
+    private async Task HoldOrResume() => await Send(PackMLCommand.Hold);
+    private async Task StopCooking() => await Send(PackMLCommand.Stop);
+
+    private async Task Send(PackMLCommand command)
+    {
+        if (!AppState.IsConnected)
+        {
+            ShowMsg("HMI is not connected to the PLC.", true);
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            var ok = await AppState.SendCommandAsync(command);
+            ShowMsg(ok ? $"{command} sent" : $"Failed to send {command}", !ok);
+        }
+        catch (Exception ex)
+        {
+            ShowMsg(ex.Message, true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void ShowMsg(string msg, bool error)
+    {
+        commandMessage = msg;
+        commandIsError = error;
+    }
+
+    public void Dispose() => AppState.StateChanged -= OnStateChanged;
 }
-
-<style>
-    .realtime-chart-card {
-        background-color: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .realtime-chart-card h3 {
-        margin-bottom: 20px;
-        color: #333;
-    }
-
-    .countdown-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-
-    .countdown-label {
-        margin-top: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        color: #495057;
-    }
-
-    .chart-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-
-    .bars {
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        gap: 16px;
-        height: 160px;
-        padding: 0 10px;
-        overflow-x: auto;
-    }
-
-    .bar-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-width: 50px;
-    }
-
-    .bar-track {
-        width: 28px;
-        height: 100px;
-        background-color: #f1f3f5;
-        border-radius: 4px;
-        display: flex;
-        align-items: flex-end;
-        overflow: hidden;
-    }
-
-    .bar-fill {
-        width: 100%;
-        background: linear-gradient(180deg, #339af0, #228be6);
-        border-radius: 4px 4px 0 0;
-        transition: height 0.3s ease;
-    }
-
-    .bar-value {
-        margin-top: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #212529;
-    }
-
-    .bar-label {
-        margin-top: 2px;
-        font-size: 11px;
-        color: #868e96;
-        text-align: center;
-        max-width: 60px;
-    }
-
-    .chart-empty {
-        text-align: center;
-        padding: 60px 20px;
-        color: #868e96;
-    }
-
-    .chart-empty.small {
-        padding: 20px;
-    }
-</style>

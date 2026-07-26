@@ -2,15 +2,13 @@ namespace BlazorApp.Services;
 
 public class PlcPollingService : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly AdsService _adsService;
     private readonly ILogger<PlcPollingService> _logger;
     private readonly TimeSpan _pollingInterval = TimeSpan.FromMilliseconds(500);
 
-    public PlcPollingService(
-        IServiceProvider serviceProvider,
-        ILogger<PlcPollingService> logger)
+    public PlcPollingService(AdsService adsService, ILogger<PlcPollingService> logger)
     {
-        _serviceProvider = serviceProvider;
+        _adsService = adsService;
         _logger = logger;
     }
 
@@ -22,12 +20,9 @@ public class PlcPollingService : BackgroundService
         {
             try
             {
-                using var scope = _serviceProvider.CreateScope();
-                var adsService = scope.ServiceProvider.GetRequiredService<AdsService>();
-
-                if (adsService.IsConnected)
+                if (_adsService.IsConnected)
                 {
-                    await adsService.ReadProcessStatusAsync();
+                    await _adsService.ReadProcessStatusAsync();
                 }
 
                 await Task.Delay(_pollingInterval, stoppingToken);

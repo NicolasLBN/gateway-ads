@@ -1,0 +1,150 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@using BlazorApp.Services
+@inject AuthService AuthService
+@inject AuthSessionService Session
+
+<div class="auth-panel">
+    @if (Session.IsAuthenticated)
+    {
+        <div class="auth-user">
+            <span class="auth-avatar" aria-hidden="true">@(Session.Username![0])</span>
+            <span class="auth-name">@Session.Username</span>
+            <button type="button" class="auth-btn ghost" @onclick="Logout">Sign out</button>
+        </div>
+    }
+    else
+    {
+        <div class="auth-actions">
+            <button type="button" class="auth-btn @(mode == Mode.Login ? "active" : "")" @onclick="() => Open(Mode.Login)">Sign in</button>
+            <button type="button" class="auth-btn @(mode == Mode.Register ? "active" : "")" @onclick="() => Open(Mode.Register)">Register</button>
+        </div>
+
+        @if (mode != Mode.Closed)
+        {
+            <div class="auth-dropdown">
+                <h4>@(mode == Mode.Login ? "Sign in" : "Create account")</h4>
+                <div class="field">
+                    <label>Username</label>
+                    <input type="text" autocomplete="username" @bind="username" @bind:event="oninput" maxlength="40" />
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" autocomplete="@(mode == Mode.Login ? "current-password" : "new-password")" @bind="password" @bind:event="oninput" />
+                </div>
+                @if (mode == Mode.Register)
+                {
+                    <div class="field">
+                        <label>Confirm password</label>
+                        <input type="password" autocomplete="new-password" @bind="confirm" @bind:event="oninput" />
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <p class="auth-error">@error</p>
+                }
+                @if (!string.IsNullOrEmpty(success))
+                {
+                    <p class="auth-success">@success</p>
+                }
+                <div class="auth-form-actions">
+                    <button type="button" class="auth-btn ghost" @onclick="Close">Cancel</button>
+                    <button type="button" class="auth-btn primary" @onclick="Submit" disabled="@busy">
+                        @(busy ? "…" : mode == Mode.Login ? "Sign in" : "Register")
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private enum Mode { Closed, Login, Register }
+
+    private Mode mode = Mode.Closed;
+    private string username = "";
+    private string password = "";
+    private string confirm = "";
+    private string? error;
+    private string? success;
+    private bool busy;
+
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+    }
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+
+    private void Open(Mode m)
+    {
+        mode = m;
+        error = null;
+        success = null;
+        password = "";
+        confirm = "";
+    }
+
+    private void Close()
+    {
+        mode = Mode.Closed;
+        error = null;
+        success = null;
+    }
+
+    private void Submit()
+    {
+        busy = true;
+        error = null;
+        success = null;
+        try
+        {
+            if (mode == Mode.Register)
+            {
+                if (password != confirm)
+                {
+                    error = "Passwords do not match.";
+                    return;
+                }
+
+                var result = AuthService.Register(username, password);
+                if (!result.Success)
+                {
+                    error = result.Error;
+                    return;
+                }
+
+                Session.SetUser(result.User!);
+                success = null;
+                Close();
+            }
+            else
+            {
+                var result = AuthService.Login(username, password);
+                if (!result.Success)
+                {
+                    error = result.Error;
+                    return;
+                }
+
+                Session.SetUser(result.User!);
+                Close();
+            }
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void Logout()
+    {
+        Session.Clear();
+        Close();
+        username = "";
+        password = "";
+        confirm = "";
+    }
+
+    public void Dispose() => Session.Changed -= OnSessionChanged;
+}

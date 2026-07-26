@@ -12,7 +12,6 @@
 
 <div class="recipe-details-page">
     <div class="page-toolbar">
-        <a href="/" class="link-back">Back</a>
         <h1 class="page-title">Recipe Details</h1>
     </div>
 
@@ -173,6 +172,7 @@
     private string customStepName = "";
     private bool isBusy;
     private string? error;
+    private bool _idleRequested;
 
     protected override void OnInitialized()
     {
@@ -186,6 +186,15 @@
             ingredients = r.Ingredients.Count > 0 ? r.Ingredients.Select(CopyIngredient).ToList() : new() { new Ingredient() };
             steps = r.Steps.ToList();
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _idleRequested || !AppState.IsConnected)
+            return;
+
+        _idleRequested = true;
+        await AppState.EnsureIdleAsync();
     }
 
     private static Ingredient CopyIngredient(Ingredient i) => new()

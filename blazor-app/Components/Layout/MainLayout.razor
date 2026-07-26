@@ -1,12 +1,8 @@
 ﻿@inherits LayoutComponentBase
-@implements IDisposable
-@using BlazorApp.Services
-@using BlazorApp.Models
-@inject AppStateService AppState
 
 <div class="page">
     <header class="topbar">
-        <div class="brand">
+        <a href="/" class="brand" title="Home">
             <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/>
             </svg>
@@ -14,37 +10,15 @@
                 <div class="brand-title">Gateway ADS</div>
                 <div class="brand-sub">Recipe Manager HMI</div>
             </div>
-        </div>
-        <nav class="topnav">
-            <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
-            <NavLink href="/new-recipe">Recipe</NavLink>
-            <NavLink href="/cooking">Cooking</NavLink>
-            <NavLink href="/favorites">Favorites</NavLink>
-            <NavLink href="/history">History</NavLink>
-            <NavLink href="/machine-settings">Settings</NavLink>
-        </nav>
+        </a>
+        <AuthHeaderPanel />
     </header>
 
     <main class="content">
         @Body
     </main>
 
-    <footer class="status-footer">
-        <div class="footer-plc-states">
-            <span class="footer-label">PLC</span>
-            <span class="state-chip @(IsState(PackMLState.Stopped) ? "active stopped" : "")">Stopped</span>
-            <span class="state-chip @(IsState(PackMLState.Idle) ? "active idle" : "")">Idle</span>
-            <span class="state-chip @(IsState(PackMLState.Execute) ? "active execute" : "")">Execute</span>
-            @if (CurrentState is PackMLState s && s is not (PackMLState.Stopped or PackMLState.Idle or PackMLState.Execute))
-            {
-                <span class="state-chip active other">@s</span>
-            }
-        </div>
-        <div class="footer-connection @(AppState.IsConnected ? "online" : "offline")">
-            <span class="conn-dot"></span>
-            <span>@(AppState.IsConnected ? "HMI connected to PLC" : "HMI offline — PLC disconnected")</span>
-        </div>
-    </footer>
+    <PlcStatusFooter />
 </div>
 
 <div id="blazor-error-ui">
@@ -52,18 +26,3 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
-
-@code {
-    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
-
-    private bool IsState(PackMLState state) => CurrentState == state;
-
-    protected override void OnInitialized()
-    {
-        AppState.StateChanged += OnStateChanged;
-    }
-
-    private void OnStateChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose() => AppState.StateChanged -= OnStateChanged;
-}

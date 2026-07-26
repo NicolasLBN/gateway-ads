@@ -60,6 +60,42 @@ public class AppStateService
         return result;
     }
 
+    /// <summary>Bring PLC to Stopped (Home page). No-op if already stopped/clearing.</summary>
+    public async Task EnsureStoppedAsync()
+    {
+        if (!IsConnected)
+            return;
+
+        var state = LatestProcessStatus?.State;
+        if (state is PackMLState.Stopped or PackMLState.Clearing)
+            return;
+
+        await SendCommandAsync(PackMLCommand.Stop);
+    }
+
+    /// <summary>Bring PLC to Idle (Recipe details). Stops first if needed, then Reset.</summary>
+    public async Task EnsureIdleAsync()
+    {
+        if (!IsConnected)
+            return;
+
+        var state = LatestProcessStatus?.State;
+        if (state == PackMLState.Idle || state == PackMLState.Resetting)
+            return;
+
+        if (state is PackMLState.Execute or PackMLState.Starting or PackMLState.Completing)
+        {
+            await SendCommandAsync(PackMLCommand.Stop);
+            await Task.Delay(400);
+            state = LatestProcessStatus?.State;
+        }
+
+        if (state is PackMLState.Stopped or PackMLState.Complete or null)
+        {
+            await SendCommandAsync(PackMLCommand.Reset);
+        }
+    }
+
     private void OnProcessStatusUpdated(object? sender, ProcessStatus status)
     {
         var previous = LatestProcessStatus;

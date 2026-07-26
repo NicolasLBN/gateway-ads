@@ -76,3 +76,8 @@ nupkg/
 
 # Keep reports directory but ignore generated PDFs
 wwwroot/reports/*.pdf
+
+# Local LiteDB auth store
+Data/
+*.db
+*.db-lock

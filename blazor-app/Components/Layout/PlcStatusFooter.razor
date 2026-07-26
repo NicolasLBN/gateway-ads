@@ -1,0 +1,37 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject AppStateService AppState
+
+<footer class="status-footer">
+    <div class="footer-plc-states">
+        <span class="footer-label">PLC</span>
+        <span class="state-chip @(IsState(PackMLState.Stopped) ? "active stopped" : "")">Stopped</span>
+        <span class="state-chip @(IsState(PackMLState.Idle) ? "active idle" : "")">Idle</span>
+        <span class="state-chip @(IsState(PackMLState.Execute) ? "active execute" : "")">Execute</span>
+        @if (CurrentState is PackMLState s && s is not (PackMLState.Stopped or PackMLState.Idle or PackMLState.Execute))
+        {
+            <span class="state-chip active other">@s</span>
+        }
+    </div>
+    <div class="footer-connection @(AppState.IsConnected ? "online" : "offline")">
+        <span class="conn-dot"></span>
+        <span>@(AppState.IsConnected ? "HMI connected to PLC" : "HMI offline — PLC disconnected")</span>
+    </div>
+</footer>
+
+@code {
+    private PackMLState? CurrentState => AppState.LatestProcessStatus?.State;
+
+    private bool IsState(PackMLState state) => CurrentState == state;
+
+    protected override void OnInitialized()
+    {
+        AppState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => AppState.StateChanged -= OnStateChanged;
+}
