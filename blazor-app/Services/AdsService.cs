@@ -1,5 +1,6 @@
 using TwinCAT.Ads;
 using BlazorApp.Models;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace BlazorApp.Services;
@@ -14,51 +15,142 @@ public class AdsService : IDisposable
 
     private AdsClient? _adsClient;
     private readonly ILogger<AdsService> _logger;
+    private readonly AdsOptions _options;
     private bool _isConnected;
-    private string _amsNetId = "127.0.0.1.1.1";
-    private int _amsPort = 851;
+    private string _amsNetId;
+    private int _amsPort;
     private bool _isHeld;
 
     public event EventHandler<ProcessStatus>? ProcessStatusUpdated;
 
     public bool IsConnected => _isConnected;
 
-    public AdsService(ILogger<AdsService> logger)
+    /// <summary>Fixed target from appsettings.json (section ADS).</summary>
+    public AdsOptions ConfiguredTarget => _options;
+
+    /// <summary>Last connection failure detail, surfaced to the UI for diagnostics.</summary>
+    public string? LastError { get; private set; }
+
+    public AdsService(ILogger<AdsService> logger, IOptions<AdsOptions> options)
     {
         _logger = logger;
+        _options = options.Value;
+        _amsNetId = _options.AmsNetId;
+        _amsPort = _options.AmsPort;
+    }
+
+    /// <summary>
+    /// Connect using the fixed AMS Net ID + port from appsettings.json.
+    /// </summary>
+    public Task<bool> ConnectFromConfigAsync()
+    {
+        return ConnectAsync(_options.AmsNetId, _options.AmsPort);
     }
 
     public async Task<bool> ConnectAsync(string amsNetId, int amsPort)
     {
+        LastError = null;
+
         try
         {
-            _amsNetId = amsNetId;
+            _amsNetId = amsNetId?.Trim() ?? string.Empty;
             _amsPort = amsPort;
 
             _adsClient?.Dispose();
-            _adsClient = new AdsClient();
+            // CompatibilityDefault / Default use Router+TcpIp (needed for TwinCAT UmRT).
+            _adsClient = new AdsClient(new AdsClientSettings(Math.Max(1000, _options.TimeoutMs)));
 
-            await Task.Run(() => _adsClient.Connect(_amsNetId, _amsPort));
+            // Prefer AmsNetId.Local for loopback targets: the machine's real AMS Net ID
+            // is often not 127.0.0.1.1.1, and string Connect can fail earlier with
+            // ClientPortNotOpen when the router rejects a mismatched route.
+            await Task.Run(() =>
+            {
+                // Always prefer Local for the machine's own runtime (UmRT / TcSysSrv).
+                // Using the numeric local NetId as a "remote" target can fail earlier
+                // while registering the Dynamic client port.
+                if (ShouldUseLocalRouter(_amsNetId))
+                {
+                    _logger.LogInformation("ADS Connect via AmsNetId.Local -> port {Port}", _amsPort);
+                    _adsClient.Connect(AmsNetId.Local, _amsPort);
+                }
+                else
+                {
+                    var netId = AmsNetId.Parse(_amsNetId);
+                    _logger.LogInformation("ADS Connect via {NetId} -> port {Port}", netId, _amsPort);
+                    _adsClient.Connect(netId, _amsPort);
+                }
+            });
 
             _isConnected = _adsClient.IsConnected;
 
             if (_isConnected)
             {
-                _logger.LogInformation($"Connected to PLC at {_amsNetId}:{_amsPort}");
+                _logger.LogInformation(
+                    "Connected to PLC at {AmsNetId}:{AmsPort} (from config, local={IsLocal})",
+                    _amsNetId, _amsPort, IsLocalAmsNetId(_amsNetId));
                 _isHeld = false;
 
-                // Let the PLC know a client is now connected
                 await WriteSymbolAsync("GVL_Command.bAdsConnected", true);
+            }
+            else
+            {
+                LastError = $"ADS Connect returned without error but IsConnected=false for {_amsNetId}:{_amsPort}.";
             }
 
             return _isConnected;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to connect to PLC");
+            LastError = BuildFriendlyAdsError(ex, amsNetId, amsPort);
+            _logger.LogError(ex, "Failed to connect to PLC: {Detail}", LastError);
             _isConnected = false;
             return false;
         }
+    }
+
+    private static bool ShouldUseLocalRouter(string amsNetId)
+    {
+        if (string.IsNullOrWhiteSpace(amsNetId))
+            return true;
+
+        var normalized = amsNetId.Trim().ToLowerInvariant();
+        if (normalized is "local" or "127.0.0.1.1.1" or "::1" or "localhost")
+            return true;
+
+        // Also treat the machine's real AMS Net ID as local (shown in UmRT / TcSysUI).
+        try
+        {
+            var configured = AmsNetId.Parse(amsNetId.Trim());
+            return configured == AmsNetId.Local;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsLocalAmsNetId(string amsNetId) => ShouldUseLocalRouter(amsNetId);
+
+    private static string BuildFriendlyAdsError(Exception ex, string? amsNetId, int amsPort)
+    {
+        var message = ex.Message ?? string.Empty;
+
+        if (message.Contains("ClientPortNotOpen", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("ConnectPortFailed", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Cannot register AmsPort", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+                $"Cannot open an ADS client port to {amsNetId}:{amsPort}. " +
+                "TwinCAT Message Router rejected the connection (ClientPortNotOpen). " +
+                "Likely cause on this PC: TWO TcSystemServiceUm processes — " +
+                "an orphan owns ADS port 48898 while UmRT_Default is another PID. " +
+                "Fix: Task Manager → end the older TcSystemServiceUm that is NOT UmRT_Default, " +
+                "or in UmRT press 'x' then restart UmRT_Default only (one instance). " +
+                "Then confirm state=Run ('s'), activate ReceipeManager on port 851, restart Blazor, retry. " +
+                $"Raw: {message}";
+        }
+
+        return $"ADS connection to {amsNetId}:{amsPort} failed: {message}";
     }
 
     public void Disconnect()

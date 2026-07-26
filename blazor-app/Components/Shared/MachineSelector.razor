@@ -1,33 +1,21 @@
 @using BlazorApp.Models
 @using BlazorApp.Services
-@inject MachineService MachineService
 @inject AdsService AdsService
 @inject AppStateService AppState
 
 <div class="machine-selector-card">
     <h3>Machine Connection</h3>
-    
-    <div class="form-group">
-        <label>Select Machine:</label>
-        <select class="form-control" @onchange="OnMachineSelected" disabled="@(isConnecting || AppState.IsConnected)">
-            <option value="">-- Select a machine --</option>
-            @foreach (var machine in machines)
-            {
-                <option value="@machine.Id" selected="@(AppState.SelectedMachine?.Id == machine.Id)">
-                    @machine.Name
-                </option>
-            }
-        </select>
-    </div>
 
-    @if (selectedMachine != null)
-    {
-        <div class="machine-details">
-            <p><strong>Description:</strong> @selectedMachine.Description</p>
-            <p><strong>AMS Net ID:</strong> @selectedMachine.AmsNetId</p>
-            <p><strong>AMS Port:</strong> @selectedMachine.AmsPort</p>
-        </div>
-    }
+    <p class="config-hint">
+        Target is fixed in <code>appsettings.json</code> (section <code>ADS</code>).
+        Change Net ID / port there, then restart the app.
+    </p>
+
+    <div class="machine-details">
+        <p><strong>Name:</strong> @AdsService.ConfiguredTarget.MachineName</p>
+        <p><strong>AMS Net ID:</strong> @AdsService.ConfiguredTarget.AmsNetId</p>
+        <p><strong>AMS Port:</strong> @AdsService.ConfiguredTarget.AmsPort</p>
+    </div>
 
     @if (error != null)
     {
@@ -39,14 +27,14 @@
     <div class="button-group">
         @if (!AppState.IsConnected)
         {
-            <button class="btn btn-primary" @onclick="Connect" disabled="@(selectedMachine == null || isConnecting)">
+            <button class="btn btn-primary" @onclick="Connect" disabled="@isConnecting">
                 @if (isConnecting)
                 {
                     <span>Connecting...</span>
                 }
                 else
                 {
-                    <span>Connect</span>
+                    <span>Connect (from config)</span>
                 }
             </button>
         }
@@ -57,50 +45,14 @@
             </button>
         }
     </div>
-
-    <div class="manual-connect">
-        <h4>Or enter an AMS Net ID directly</h4>
-        <div class="form-row">
-            <div class="form-group">
-                <label>AMS Net ID</label>
-                <input type="text" class="form-control" @bind="manualAmsNetId" placeholder="e.g. 127.0.0.1.1.1"
-                       disabled="@(isConnecting || AppState.IsConnected)" />
-            </div>
-            <div class="form-group form-group-port">
-                <label>Port</label>
-                <input type="number" class="form-control" @bind="manualAmsPort"
-                       disabled="@(isConnecting || AppState.IsConnected)" />
-            </div>
-        </div>
-
-        @if (!AppState.IsConnected)
-        {
-            <button class="btn btn-primary" @onclick="ConnectManual" disabled="@(string.IsNullOrWhiteSpace(manualAmsNetId) || isConnecting)">
-                @if (isConnecting)
-                {
-                    <span>Connecting...</span>
-                }
-                else
-                {
-                    <span>Connect to this AMS Net ID</span>
-                }
-            </button>
-        }
-    </div>
 </div>
 
 @code {
-    private List<Machine> machines = new();
-    private Machine? selectedMachine;
     private bool isConnecting;
     private string? error;
-    private string manualAmsNetId = "127.0.0.1.1.1";
-    private int manualAmsPort = 851;
 
     protected override void OnInitialized()
     {
-        machines = MachineService.GetMachines();
-        selectedMachine = AppState.SelectedMachine;
         AppState.StateChanged += OnStateChanged;
     }
 
@@ -109,72 +61,31 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnMachineSelected(ChangeEventArgs e)
-    {
-        var machineId = e.Value?.ToString();
-        if (!string.IsNullOrEmpty(machineId))
-        {
-            selectedMachine = MachineService.GetMachine(machineId);
-            AppState.SetSelectedMachine(selectedMachine!);
-        }
-        else
-        {
-            selectedMachine = null;
-        }
-    }
-
     private async Task Connect()
     {
-        if (selectedMachine == null) return;
-
         isConnecting = true;
         error = null;
 
         try
         {
-            var success = await AdsService.ConnectAsync(selectedMachine.AmsNetId, selectedMachine.AmsPort);
-            
-            if (!success)
-            {
-                error = "Failed to connect to PLC. Please check that TwinCAT is running.";
-            }
-        }
-        catch (Exception ex)
-        {
-            error = $"Connection error: {ex.Message}";
-        }
-        finally
-        {
-            isConnecting = false;
-        }
-    }
-
-    private async Task ConnectManual()
-    {
-        if (string.IsNullOrWhiteSpace(manualAmsNetId)) return;
-
-        isConnecting = true;
-        error = null;
-
-        try
-        {
-            var success = await AdsService.ConnectAsync(manualAmsNetId, manualAmsPort);
+            var cfg = AdsService.ConfiguredTarget;
+            var success = await AdsService.ConnectFromConfigAsync();
 
             if (success)
             {
-                selectedMachine = new Machine
+                AppState.SetSelectedMachine(new Machine
                 {
-                    Id = "manual",
-                    Name = $"Manual ({manualAmsNetId})",
-                    AmsNetId = manualAmsNetId,
-                    AmsPort = manualAmsPort,
-                    Description = "Manually entered AMS Net ID"
-                };
-                AppState.SetSelectedMachine(selectedMachine);
+                    Id = "config",
+                    Name = cfg.MachineName,
+                    AmsNetId = cfg.AmsNetId,
+                    AmsPort = cfg.AmsPort,
+                    Description = "Loaded from appsettings.json"
+                });
             }
             else
             {
-                error = "Failed to connect to PLC. Please check that TwinCAT is running.";
+                error = AdsService.LastError
+                    ?? "Failed to connect to PLC. Please check that TwinCAT is running in Run Mode.";
             }
         }
         catch (Exception ex)
@@ -207,26 +118,21 @@
     }
 
     .machine-selector-card h3 {
-        margin-bottom: 20px;
+        margin-bottom: 12px;
         color: #333;
     }
 
-    .form-group {
+    .config-hint {
+        font-size: 13px;
+        color: #868e96;
         margin-bottom: 15px;
     }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
+    .config-hint code {
+        background: #f1f3f5;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 12px;
     }
 
     .machine-details {
@@ -242,30 +148,6 @@
 
     .button-group {
         margin-top: 15px;
-    }
-
-    .manual-connect {
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .manual-connect h4 {
-        margin: 0 0 15px 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #495057;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .form-group-port input {
-        width: 100%;
     }
 
     .btn {
@@ -310,5 +192,7 @@
         background-color: #ffe0e0;
         color: #c92a2a;
         border: 1px solid #ffc9c9;
+        white-space: pre-wrap;
+        font-size: 13px;
     }
 </style>

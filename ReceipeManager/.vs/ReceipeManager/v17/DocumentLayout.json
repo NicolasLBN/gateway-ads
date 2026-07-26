@@ -1,7 +1,16 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\niko8\\dev\\gateway-ads\\ReceipeManager\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{EF181F24-CCD0-4E64-A1F8-E211941520D5}|ReceipeManager\\ReceipeManager.plcproj|C:\\Users\\niko8\\dev\\gateway-ads\\ReceipeManager\\ReceipeManager\\GVLs\\GVL_Command.TcGVL||{CFF47BB1-5559-4BDE-A2AF-06B30BC64F6C}",
+      "RelativeMoniker": "D:0:0:{EF181F24-CCD0-4E64-A1F8-E211941520D5}|ReceipeManager\\ReceipeManager.plcproj|solutionrelative:ReceipeManager\\GVLs\\GVL_Command.TcGVL||{CFF47BB1-5559-4BDE-A2AF-06B30BC64F6C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EF181F24-CCD0-4E64-A1F8-E211941520D5}|ReceipeManager\\ReceipeManager.plcproj|C:\\Users\\niko8\\dev\\gateway-ads\\ReceipeManager\\ReceipeManager\\GVLs\\GVL_Recipe.TcGVL||{CFF47BB1-5559-4BDE-A2AF-06B30BC64F6C}",
+      "RelativeMoniker": "D:0:0:{EF181F24-CCD0-4E64-A1F8-E211941520D5}|ReceipeManager\\ReceipeManager.plcproj|solutionrelative:ReceipeManager\\GVLs\\GVL_Recipe.TcGVL||{CFF47BB1-5559-4BDE-A2AF-06B30BC64F6C}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -18,6 +27,28 @@
             {
               "$type": "Bookmark",
               "Name": "ST:1:0:{94c070b9-db0b-4415-9311-bac4eef266f5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GVL_Command",
+              "DocumentMoniker": "C:\\Users\\niko8\\dev\\gateway-ads\\ReceipeManager\\ReceipeManager\\GVLs\\GVL_Command.TcGVL",
+              "RelativeDocumentMoniker": "ReceipeManager\\GVLs\\GVL_Command.TcGVL",
+              "ToolTip": "GVL_Command [ReceipeManager.ReceipeManager]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-07-22T17:47:50.099Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "GVL_Recipe",
+              "DocumentMoniker": "C:\\Users\\niko8\\dev\\gateway-ads\\ReceipeManager\\ReceipeManager\\GVLs\\GVL_Recipe.TcGVL",
+              "RelativeDocumentMoniker": "ReceipeManager\\GVLs\\GVL_Recipe.TcGVL",
+              "ToolTip": "GVL_Recipe [ReceipeManager.ReceipeManager]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-07-22T17:40:21.428Z",
+              "EditorCaption": ""
             }
           ]
         }
