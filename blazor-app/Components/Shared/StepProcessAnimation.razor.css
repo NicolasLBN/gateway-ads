@@ -1,0 +1,93 @@
+.proc-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #74c0fc;
+    opacity: 0.45;
+    transition: opacity 0.25s ease, color 0.25s ease;
+}
+
+.proc-anim.active {
+    opacity: 1;
+}
+
+.proc-anim.proc-ajout.active { color: #4dabf7; }
+.proc-anim.proc-melange.active { color: #69db7c; }
+.proc-anim.proc-cuisson.active { color: #ff922b; }
+
+.anim-svg {
+    width: 120px;
+    height: 120px;
+}
+
+.anim-label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+/* Ajout — dropping liquid */
+.proc-anim.active .drop {
+    animation: drop-fall 1.4s ease-in infinite;
+}
+.proc-anim.active .drop.d2 { animation-delay: 0.45s; }
+.proc-anim.active .drop.d3 { animation-delay: 0.9s; }
+.proc-anim.active .liquid {
+    animation: liquid-fill 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes drop-fall {
+    0% { transform: translateY(0); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(42px); opacity: 0; }
+}
+
+@keyframes liquid-fill {
+    from { transform: translateY(8px); opacity: 0.25; }
+    to { transform: translateY(0); opacity: 0.55; }
+}
+
+/* Melange — spinning vortex */
+.proc-anim.active .vortex {
+    transform-origin: 60px 60px;
+    animation: spin-vortex 1.2s linear infinite;
+}
+
+@keyframes spin-vortex {
+    to { transform: rotate(360deg); }
+}
+
+/* Cuisson — bubbles + steam + heat pulse */
+.proc-anim.active .bubble {
+    animation: bubble-rise 1.8s ease-in infinite;
+}
+.proc-anim.active .bubble.b2 { animation-delay: 0.4s; }
+.proc-anim.active .bubble.b3 { animation-delay: 0.85s; }
+.proc-anim.active .steam {
+    animation: steam-up 2s ease-out infinite;
+}
+.proc-anim.active .steam.s2 { animation-delay: 0.35s; }
+.proc-anim.active .steam.s3 { animation-delay: 0.7s; }
+.proc-anim.active .heat {
+    animation: heat-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes bubble-rise {
+    0% { transform: translateY(10px); opacity: 0; }
+    30% { opacity: 0.9; }
+    100% { transform: translateY(-28px); opacity: 0; }
+}
+
+@keyframes steam-up {
+    0% { transform: translateY(0); opacity: 0; }
+    40% { opacity: 0.8; }
+    100% { transform: translateY(-14px); opacity: 0; }
+}
+
+@keyframes heat-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}

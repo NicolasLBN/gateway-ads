@@ -1,0 +1,53 @@
+<div class="num-stepper @(Disabled ? "disabled" : null)">
+    <button type="button" class="stepper-btn" disabled="@Disabled" @onclick="Decrement" aria-label="Decrease">−</button>
+    <div class="stepper-value">
+        <input type="number"
+               step="@Step"
+               min="@Min"
+               max="@Max"
+               disabled="@Disabled"
+               value="@Value"
+               @onchange="OnInputChange" />
+        @if (!string.IsNullOrEmpty(Unit))
+        {
+            <span class="stepper-unit">@Unit</span>
+        }
+    </div>
+    <button type="button" class="stepper-btn" disabled="@Disabled" @onclick="Increment" aria-label="Increase">+</button>
+</div>
+
+@code {
+    [Parameter] public double Value { get; set; }
+    [Parameter] public EventCallback<double> ValueChanged { get; set; }
+    [Parameter] public double Step { get; set; } = 1;
+    [Parameter] public double Min { get; set; } = 0;
+    [Parameter] public double? Max { get; set; }
+    [Parameter] public string Unit { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; }
+
+    private async Task Increment() => await SetValue(Value + Step);
+    private async Task Decrement() => await SetValue(Value - Step);
+
+    private async Task OnInputChange(ChangeEventArgs e)
+    {
+        if (double.TryParse(Convert.ToString(e.Value), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+            || double.TryParse(Convert.ToString(e.Value), out parsed))
+        {
+            await SetValue(parsed);
+        }
+        else
+        {
+            await ValueChanged.InvokeAsync(Value);
+        }
+    }
+
+    private async Task SetValue(double next)
+    {
+        if (next < Min) next = Min;
+        if (Max.HasValue && next > Max.Value) next = Max.Value;
+        next = Math.Round(next, 4);
+        Value = next;
+        await ValueChanged.InvokeAsync(next);
+    }
+}

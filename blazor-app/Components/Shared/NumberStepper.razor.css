@@ -1,0 +1,80 @@
+.num-stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+}
+
+.num-stepper.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.stepper-btn {
+    flex: 0 0 48px;
+    min-width: 48px;
+    min-height: 52px;
+    border-radius: 8px;
+    border: 1.5px solid #2f3d52;
+    background: #243044;
+    color: #e8eef7;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+.stepper-btn:hover:not(:disabled) {
+    border-color: #1c7ed6;
+    background: #1c7ed6;
+}
+
+.stepper-btn:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.stepper-value {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1.5px solid #2f3d52;
+    background: transparent;
+}
+
+.stepper-value:focus-within {
+    border-color: #1c7ed6;
+    box-shadow: 0 0 0 3px rgba(28, 126, 214, 0.25);
+}
+
+.stepper-value input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: #e8eef7;
+    font-size: 18px;
+    font-weight: 600;
+    outline: none;
+    /* Hide native spinners */
+    -moz-appearance: textfield;
+}
+
+.stepper-value input::-webkit-outer-spin-button,
+.stepper-value input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stepper-unit {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8b9bb4;
+    text-transform: none;
+    letter-spacing: 0.02em;
+}

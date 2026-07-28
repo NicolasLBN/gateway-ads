@@ -1,0 +1,54 @@
+@using BlazorApp.Models
+
+<div class="proc-anim proc-@CssClass @(Active ? "active" : "idle")">
+    @if (Kind == RecipeStepType.Ajout)
+    {
+        <svg class="anim-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <path class="beaker" d="M38 20h44v10H38V20zm6 10h32l8 70H36l8-70z" fill="none" stroke="currentColor" stroke-width="3"/>
+            <path class="liquid" d="M44 70h32l4 30H40l4-30z" fill="currentColor" opacity="0.35"/>
+            <circle class="drop d1" cx="60" cy="28" r="4" fill="currentColor"/>
+            <circle class="drop d2" cx="60" cy="28" r="3" fill="currentColor"/>
+            <circle class="drop d3" cx="60" cy="28" r="3.5" fill="currentColor"/>
+        </svg>
+        <span class="anim-label">Ajout</span>
+    }
+    else if (Kind == RecipeStepType.Melange)
+    {
+        <svg class="anim-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-width="3" opacity="0.35"/>
+            <g class="vortex">
+                <path d="M60 30c18 0 30 14 30 30S78 90 60 90" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M60 90c-18 0-30-14-30-30S42 30 60 30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+                <circle cx="60" cy="60" r="6" fill="currentColor"/>
+            </g>
+        </svg>
+        <span class="anim-label">Mélange</span>
+    }
+    else
+    {
+        <svg class="anim-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <rect class="flask" x="40" y="28" width="40" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+            <path class="heat" d="M48 78c4-8 8-8 12 0s8 8 12 0 8-8 12 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <circle class="bubble b1" cx="52" cy="58" r="4" fill="currentColor"/>
+            <circle class="bubble b2" cx="68" cy="50" r="3" fill="currentColor"/>
+            <circle class="bubble b3" cx="58" cy="42" r="2.5" fill="currentColor"/>
+            <path class="steam s1" d="M50 24c0-8 6-8 6-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path class="steam s2" d="M60 22c0-10 6-10 6-16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path class="steam s3" d="M70 24c0-8 6-8 6-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="anim-label">Cuisson</span>
+    }
+</div>
+
+@code {
+    [Parameter] public RecipeStepType Kind { get; set; } = RecipeStepType.Ajout;
+    [Parameter] public bool Active { get; set; }
+
+    private string CssClass => Kind switch
+    {
+        RecipeStepType.Ajout => "ajout",
+        RecipeStepType.Melange => "melange",
+        RecipeStepType.Cuisson => "cuisson",
+        _ => "ajout"
+    };
+}
