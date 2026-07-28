@@ -131,6 +131,80 @@ Polling : `PlcPollingService` toutes les **500 ms**.
 | PDF web | `wwwroot/reports/report_{id}.pdf` |
 | Exports locaux | `exports/formulation_*.pdf` + `.json` |
 
+## Service d’authentification
+
+L’auth repose sur **trois briques** qui partagent la même base utilisateurs LiteDB, mais deux modes de session différents (HMI vs API).
+
+```
+┌─────────────────┐     Register / Login      ┌──────────────────┐
+│ AuthHeaderPanel │ ───────────────────────► │ AuthService      │
+│ (HMI Blazor)    │ ◄── AuthSessionService   │ (LiteDB auth.db) │
+└─────────────────┘      (mémoire circuit)   │ PasswordHasher   │
+                                              └────────┬─────────┘
+┌─────────────────┐     POST /api/auth/login           │
+│ React portal    │ ───────────────────────────────────┤
+│ + JWT Bearer    │ ◄── JwtTokenService (token signé)  │
+└─────────────────┘                                    │
+```
+
+### 1. `AuthService` (singleton) — source de vérité
+
+Fichier : `Services/AuthService.cs`  
+Stockage : `Data/auth.db`, collection `users` (index unique sur `Username`).
+
+| Opération | Comportement |
+|-----------|----------------|
+| **Register** | Username normalisé (`trim` + minuscules), ≥ 3 car. ; mot de passe ≥ 6 car. ; rejet si username déjà pris ; hash via `PasswordHasher<AuthUser>` (ASP.NET Identity) ; insert LiteDB |
+| **Login** | Recherche par username ; `VerifyHashedPassword` ; message générique si échec ; re-hash auto si `SuccessRehashNeeded` |
+
+Le **mot de passe en clair n’est jamais stocké** — uniquement `PasswordHash`.
+
+Modèle `AuthUser` : `Id` (ObjectId LiteDB), `Username`, `PasswordHash`, `CreatedAt`.
+
+### 2. Session HMI — `AuthSessionService` (scoped)
+
+Fichier : `Services/AuthSessionService.cs`  
+UI : `Components/Layout/AuthHeaderPanel.razor` (header droite).
+
+- **Pas de cookie / pas de JWT** pour le Blazor HMI : après Register ou Sign in, `SetUser` garde en mémoire (circuit Blazor) l’utilisateur **sans** le hash.
+- `Sign out` → `Clear()`.
+- Session **perdue au refresh navigateur** ou à la coupure du circuit SignalR (comportement HMI atelier, pas SSO).
+- L’HMI n’est **pas encore gate** par `[Authorize]` sur les pages : l’auth header sert surtout à créer le compte partagé avec l’API / React.
+
+Flux UI :
+1. **Register** → `AuthService.Register` → `AuthSessionService.SetUser`
+2. **Sign in** → `AuthService.Login` → `SetUser`
+3. Affichage avatar + username + Sign out
+
+### 3. API REST — JWT (`JwtTokenService` + Bearer)
+
+Fichiers : `Services/JwtTokenService.cs`, `Controllers/AuthController.cs`, config `Jwt` dans `appsettings.json`.
+
+1. Client React (ou autre) appelle `POST /api/auth/login` avec `{ "username", "password" }`.
+2. `AuthController` réutilise **le même** `AuthService.Login`.
+3. Si OK → `JwtTokenService.CreateToken` signe un JWT (HMAC-SHA256) avec claims `sub` (id), `unique_name` / `Name`.
+4. Réponse : `{ token, username, expiresAtUtc }` (durée = `Jwt:ExpiresHours`, défaut 12 h).
+5. Les endpoints protégés (`[Authorize]` : formulations, favorites, reports, process) exigent  
+   `Authorization: Bearer <token>`.
+6. Validation côté serveur : `AddAuthentication(JwtBearer)` dans `Program.cs` (Issuer, Audience, Secret).
+
+Le React portal stocke le token dans `localStorage` (`gateway_ads_token`).
+
+### Règles pratiques
+
+| Action | Où |
+|--------|-----|
+| Créer un compte | Header Blazor → **Register** |
+| Se connecter à l’HMI | Header → **Sign in** (session circuit) |
+| Se connecter au portail React | Même username/password → JWT |
+| Changer le secret JWT | `appsettings.json` → `Jwt:Secret` (min. 32 car. recommandés en prod) |
+
+### Ce que ce n’est pas
+
+- Pas de rôles / claims avancés (Admin, Operator) pour l’instant  
+- Pas de refresh token  
+- Pas de lien entre session Blazor et JWT (deux canaux indépendants sur la même base users)
+
 ## API REST (JWT)
 
 Base : `http://localhost:5223`  
