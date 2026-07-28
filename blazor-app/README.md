@@ -1,284 +1,173 @@
-# Blazor Gateway ADS - Industrial Application
+# Blazor Gateway ADS — HMI & API REST
 
-Complete industrial application for recipe management, PLC control via ADS, and real-time monitoring, built with **Blazor Server** and **.NET 8**.
+HMI opérateur **Blazor Server (.NET 8)** pour formulations pharmaceutiques / cosmétiques / parfumerie, communication **TwinCAT ADS**, contrôle **PackML**, persistence **LiteDB**, et **API REST JWT** consommée par le portail React.
 
-## 🎯 Features
+## Fonctionnalités
 
-- **Recipe Management**: Create and manage recipes with multiple ingredients
-- **PLC Communication**: Real-time communication with TwinCAT 3 PLC via ADS protocol using Beckhoff.TwinCAT.Ads library
-- **Real-time Monitoring**: Live monitoring of machine parameters (temperature, pressure, speed)
-- **Process Control**: Launch and monitor automated processes
-- **PDF Reports**: Generate comprehensive PDF reports of completed recipes using QuestPDF
-- **Multi-Machine Support**: Select and connect to different machines
-- **Real-time Updates**: Automatic UI updates when PLC data changes
+- **Formulations par étapes** : `Ajout` → `Mélange` → `Cuisson` (règles métier UI)
+- **Inputs touch-friendly** : steppers `+` / `−` (44–48 px) + unités
+- **PackML** : Stopped / Idle / Execute / Complete (+ Hold)
+- **Cooking** : live step progress, animations (gouttes / vortex / chaleur)
+- **Favoris** : LiteDB + seed pro (sérum HA, PBS 10x, accord parfum)
+- **Auth HMI** : inscription / login (hash mots de passe, LiteDB)
+- **Rapports** : PDF QuestPDF + JSON locaux (`wwwroot/reports`, `exports/`)
+- **API REST** : pour clients externes (React lab portal)
 
-## 🏗️ Architecture
+## Structure
 
 ```
-/blazor-app
-  /Components
-    /Layout       - Application layout and navigation
-    /Pages        - Main pages (Home, NewRecipe, History, MachineSettings)
-    /Shared       - Reusable components (MachineSelector, MachineStatus, ProcessTimeline, RealtimeChart)
-  /Services       - Business logic and PLC communication
-    - AdsService.cs           - TwinCAT ADS communication
-    - AppStateService.cs      - Application state management
-    - MachineService.cs       - Machine configuration
-    - ReportService.cs        - Report management
-    - PdfService.cs           - PDF generation
-    - PlcPollingService.cs    - Background PLC polling
-  /Models         - Data models (Recipe, Machine, ProcessStatus, etc.)
-  /wwwroot        - Static files and generated reports
-/plc-simulator    - TwinCAT 3 PLC program (unchanged from original)
+blazor-app/
+  Components/
+    Layout/          MainLayout, AuthHeaderPanel, PlcStatusFooter
+    Pages/           Home, NewRecipe, Cooking, Favorites, History, MachineSettings
+    Shared/          NumberStepper, StepProcessAnimation, RealtimeChart, SaveToast…
+  Controllers/       Auth, Formulations, Reports, Process (REST)
+  Services/          AdsService, AppState, Favorites, Auth, Jwt, Pdf, Reports, Polling
+  Models/            Recipe / RecipeStep, PackML, ProcessStatus, Report, AuthUser
+  Data/              auth.db, favorites.db (gitignored)
+  exports/           PDF/JSON locaux (gitignored)
+  wwwroot/reports/   PDF servis au navigateur
 ```
 
-## 🛠️ Technologies
+## Prérequis
 
-### Blazor Application
-- **.NET 8** - Framework
-- **Blazor Server** - Interactive web UI
-- **Beckhoff.TwinCAT.Ads** (v6.1.203) - ADS communication with TwinCAT PLC
-- **QuestPDF** (v2024.7.3) - PDF report generation
-- **C#** - Programming language
+- .NET 8 SDK
+- TwinCAT 3 + Message Router (Windows)
+- Projet PLC `ReceipeManager` en Run (port **851**)
 
-### PLC
-- **TwinCAT 3** - PLC runtime
-- **Structured Text (ST)** - Programming language
+## Configuration ADS
 
-## 📋 Prerequisites
-
-- **.NET 8 SDK** or later
-- **TwinCAT 3 XAE** (for PLC simulation)
-- **Windows** (for TwinCAT 3 - ADS protocol is Windows-specific)
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/NicolasLBN/gateway-ads.git
-cd gateway-ads/blazor-app
-```
-
-### 2. Restore Dependencies
-
-```bash
-dotnet restore
-```
-
-### 3. Configure Application
-
-The default configuration in `appsettings.json`:
+`appsettings.json` / `appsettings.Development.json` :
 
 ```json
 {
   "ADS": {
-    "DefaultAmsNetId": "127.0.0.1.1.1",
-    "DefaultAmsPort": 851
+    "AmsNetId": "199.4.42.250.1.1",
+    "AmsPort": 851,
+    "MachineName": "ReceipeManager (local)",
+    "AutoConnect": true,
+    "AutoReconnect": true,
+    "ReconnectIntervalMs": 5000,
+    "TimeoutMs": 10000
+  },
+  "Jwt": {
+    "Secret": "GatewayAdsDevSecretKey_ChangeMe_32chars!",
+    "Issuer": "gateway-ads",
+    "Audience": "gateway-ads-clients",
+    "ExpiresHours": 12
   }
 }
 ```
 
-You can modify these settings if your TwinCAT setup uses different values.
+Connexion ADS au démarrage via `PreBuildAdsAsync` (style ThermalWinch).
 
-### 4. PLC Setup
-
-If you have TwinCAT 3 installed:
-
-1. Open TwinCAT 3 XAE (Visual Studio with TwinCAT extension)
-2. Create a new TwinCAT PLC Project
-3. Import files from `/plc-simulator` directory:
-   - Import GVL files (from `GVLs/`) into your project's GVLs folder
-   - Import POU files (from `POUs/`) into your project's POUs folder
-   - Configure PlcTask (10ms cycle, port 851)
-4. Build and activate the configuration
-5. Start the PLC in Run mode
-
-See `/plc-simulator/README_PLC.md` for detailed PLC setup instructions.
-
-## 🎮 Running the Application
-
-### Start the Blazor Application
+## Lancer l’HMI
 
 ```bash
 cd blazor-app
-dotnet run
+dotnet restore
+dotnet watch run
 ```
 
-Or with hot reload for development:
+URL typique : **http://localhost:5223**
 
-```bash
-dotnet watch
-```
+## Parcours opérateur
 
-The application will start on `https://localhost:5001` (or the port shown in console).
+1. **Home** — navigation (pas de tuile Cooking) ; envoi auto **Stop** PackML à l’entrée
+2. **Formulation** (`/new-recipe`) — nom + Add Step ; force **Idle** à l’entrée
+   - 1ʳᵉ étape = **Ajout** (obligatoire)
+   - **Mélange** si ≥ 2 ingrédients déjà ajoutés (checkboxes)
+   - **Cuisson** : °C + durée
+3. **Send recipe** → Reset auto si besoin → `/cooking`
+4. **Cooking** — Run / Hold / Stop, animations selon l’étape, Reset / Clear / PDF
+5. **Favorites** — load & send vers Cooking
+6. Header : logo → Home ; droite = Sign in / Register
 
-Open your browser and navigate to the URL shown in the console.
-
-## 📱 Usage
-
-### 1. Machine Settings
-
-- Navigate to **Machine Settings** from the main menu
-- Select a machine from the dropdown (Mixing Unit A, B, or C)
-- Click **Connect** to establish ADS connection with the PLC
-- Connection status will update in the header
-
-### 2. Create New Recipe
-
-- Navigate to **New Recipe**
-- Enter recipe details:
-  - Recipe name
-  - Preparation volume and concentration (optional)
-  - Add ingredients with name, quantity, volume, and molar mass
-- Click **Send Recipe to PLC** to upload the recipe
-- Click **Run Process** to start the automated process
-- Monitor real-time progress:
-  - Machine status (temperature, pressure, speed)
-  - Process timeline with step progress
-  - Real-time charts of machine parameters
-- When process completes, click **Generate PDF Report**
-
-### 3. Recipe History
-
-- View all completed recipes
-- See recipe details and ingredients
-- Download PDF reports
-
-## 🔌 PLC Communication
-
-The application uses the Beckhoff.TwinCAT.Ads library to communicate with TwinCAT 3 PLC:
-
-### Read Variables (Machine Status)
-- `GVL_Machine.MotorTemperature` - Motor temperature (°C)
-- `GVL_Machine.OilPressure` - Oil pressure (bar)
-- `GVL_Machine.MotorSpeed` - Motor speed (RPM)
-- Warning flags for each parameter
-
-### Read Variables (Process Status)
-- `GVL_Process.CurrentStep` - Current step number (0-7)
-- `GVL_Process.StepName` - Current step name
-- `GVL_Process.Progress` - Overall progress (0.0-1.0)
-- `GVL_Process.StepProgress` - Current step progress (0.0-1.0)
-- Time counters and error information
-
-### Write Variables (Recipe Data)
-- `GVL_Recipe.RecipeName` - Recipe name
-- `GVL_Recipe.NumIngredients` - Number of ingredients
-- Arrays for ingredient data (name, quantity, volume, molar mass)
-
-### Write Variables (Commands)
-- `GVL_Command.StartProcess` - Start the process
-- `GVL_Command.ResetProcess` - Reset the process
-- `GVL_Command.AdsConnected` - Connection status
-
-## 📊 Process Steps
-
-The PLC simulator implements a 7-step process:
-
-1. **Idle** (Step 0) - Waiting for start
-2. **Preparation** (Step 1) - 5 seconds
-3. **Dosing Ingredient A** (Step 2) - 7 seconds
-4. **Dosing Ingredient B** (Step 3) - 7 seconds
-5. **Mixing** (Step 4) - 10 seconds
-6. **Verification** (Step 5) - 4 seconds
-7. **Finalizing** (Step 6) - 3 seconds
-8. **Done** (Step 7) - Complete
-
-Total process time: ~36 seconds
-
-## 🎨 UI Theme
-
-The application uses a modern industrial theme:
-- Clean, professional design
-- Blue gradient header
-- High contrast for readability
-- Responsive layout for different screen sizes
-- Real-time status indicators
-- Color-coded warnings and alerts
-
-## 🔧 Configuration
-
-### Multiple Machines
-
-The application supports multiple machines out of the box. Configure additional machines in `Services/MachineService.cs`:
+## Modèle formulation
 
 ```csharp
-new Machine
-{
-    Id = "4",
-    Name = "Your Machine Name",
-    AmsNetId = "192.168.1.100.1.1",  // Your PLC AMS Net ID
-    AmsPort = 851,
-    Description = "Description of your machine"
-}
+Recipe
+  Name
+  ProcessSteps[] : RecipeStep
+    Type = Ajout | Melange | Cuisson
+    // Ajout: Ingredients (Name, Amount, AmountUnit, Concentration, ConcentrationUnit)
+    // Melange: SelectedIngredientNames, MixDurationMinutes, MixSpeedRpm
+    // Cuisson: TargetTemperatureC, CookDurationMinutes
 ```
 
-### Polling Interval
+Helpers PLC : `Steps` (noms) et `Ingredients` (aplatis depuis les Ajouts).
 
-Adjust PLC polling frequency in `Services/PlcPollingService.cs`:
+## PackML & symboles ADS
 
-```csharp
-private readonly TimeSpan _pollingInterval = TimeSpan.FromMilliseconds(500); // 500ms default
-```
+### Commandes (`GVL_Command`)
+- `bStart`, `bStop`, `bReset`, `bClear`, `bHold`, `bAdsConnected`
 
-## 🐛 Troubleshooting
+### État (`GVL_State`)
+- `nState`, `sStateName`, `bHeld`
 
-### ADS Connection Issues
+### Recette (`GVL_Recipe`)
+- `sRecipeName`, `nNumSteps`, `aStepNames[]`
+- `nNumIngredients`, `aIngredientName[]`, `aIngredientQuantity[]`, `aIngredientVolume[]`, `aIngredientMolarMass[]`
+- `fPreparationVolume`, `fPreparationConcentration`
 
-1. **Ensure TwinCAT 3 is running** in Config or Run mode
-2. **Check AMS Net ID and Port** in Machine Settings
-3. **Verify Windows Firewall** allows ADS communication (UDP port 48898)
-4. **Ensure TwinCAT router is running** (system tray icon)
-5. **Check route configuration** in TwinCAT System Manager
+### Process (`GVL_Process`)
+- `nCurrentStepIndex`, `sCurrentStepName`, `nTotalSteps`
+- `nStepTimeElapsed_s`, `nStepTimeRemaining_s`, `fProgress`
+- `bProcessDone`, `nErrorCode`, `sErrorText`
 
-### Application Won't Start
+Polling : `PlcPollingService` toutes les **500 ms**.
 
-1. Verify .NET 8 SDK is installed: `dotnet --version`
-2. Restore dependencies: `dotnet restore`
-3. Check for port conflicts (default is 5001)
+États utilisés : Clearing(0), Stopped(1), Resetting(2), Idle(3), Starting(4), Execute(5), Completing(6), Complete(7).
 
-### PDF Generation Issues
+> **Note :** Home envoie Stop à l’arrivée ; Recipe details force Idle. Ne pas naviguer vers Home pendant un Execute si vous ne voulez pas interrompre le cycle.
 
-1. Ensure `wwwroot/reports` directory exists and is writable
-2. Check available disk space
-3. Verify QuestPDF license (Community edition is used)
+## Persistence
 
-## 🔄 Migration from React/Node.js
+| Donnée | Stockage |
+|--------|----------|
+| Utilisateurs | `Data/auth.db` (LiteDB, PasswordHasher) |
+| Favoris | `Data/favorites.db` (LiteDB, seed 3 formulations pro) |
+| Historique rapports | `Data/report-history.json` |
+| PDF web | `wwwroot/reports/report_{id}.pdf` |
+| Exports locaux | `exports/formulation_*.pdf` + `.json` |
 
-This Blazor application replaces the original React frontend and Node.js backend with a single integrated solution:
+## API REST (JWT)
 
-- **React components** → **Blazor components** (.razor files)
-- **Zustand store** → **AppStateService** (singleton service)
-- **WebSocket** → **Background polling service** with state change events
-- **node-ads** → **Beckhoff.TwinCAT.Ads** library
-- **Puppeteer PDF** → **QuestPDF**
-- **Mantine UI** → **Custom CSS** with similar styling
+Base : `http://localhost:5223`  
+CORS : `http://localhost:5173`, `http://localhost:3000`
 
-### Key Differences
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `POST` | `/api/auth/login` | Non | `{ username, password }` → JWT |
+| `GET` | `/api/formulations` | Oui | Catalogue (favoris) |
+| `GET` | `/api/favorites` | Oui | Favoris détaillés |
+| `GET` | `/api/reports` | Oui | Historique |
+| `GET` | `/api/reports/{id}/download` | Oui | PDF (blob) |
+| `GET` | `/api/process/status` | Oui | PackML + connexion (polling React 2 s) |
 
-| Feature | React/Node.js | Blazor |
-|---------|---------------|---------|
-| Frontend | React.js | Blazor Server |
-| Backend | Node.js/Express | Integrated in Blazor |
-| State Management | Zustand | AppStateService |
-| Real-time Updates | WebSocket | SignalR (built-in) + Polling |
-| ADS Library | node-ads | Beckhoff.TwinCAT.Ads |
-| PDF Generation | Puppeteer | QuestPDF |
-| Language | JavaScript/TypeScript | C# |
+Créer un utilisateur via le header Blazor **Register**, puis login API / React.
 
-## 📄 License
+Packages : `Beckhoff.TwinCAT.Ads` 6.2.x, `LiteDB`, `QuestPDF`, `Microsoft.AspNetCore.Authentication.JwtBearer`.
+
+## Technologies
+
+- .NET 8 / Blazor Server (InteractiveServer)
+- TwinCAT ADS
+- LiteDB, QuestPDF
+- JWT Bearer
+
+## Dépannage ADS
+
+1. TwinCAT Runtime **Run**, port **851**
+2. Message Router actif (pas d’erreur `ClientPortNotOpen`)
+3. Vérifier `AmsNetId` dans appsettings
+4. Un seul `dotnet run` / `watch` à la fois (verrou `BlazorApp.exe`)
+5. Footer HMI : « HMI connected to PLC » + chips Stopped / Idle / Execute
+
+## Client React
+
+Voir [`../react-portal/README.md`](../react-portal/README.md).
+
+## Licence
 
 MIT
-
-## 👥 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
-
----
-
-Built with ❤️ for industrial automation using Blazor and TwinCAT
