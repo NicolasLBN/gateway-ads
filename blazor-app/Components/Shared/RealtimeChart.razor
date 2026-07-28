@@ -1,4 +1,5 @@
 @implements IDisposable
+@using BlazorApp.Components.Shared
 @using BlazorApp.Models
 @using BlazorApp.Services
 @inject AppStateService AppState
@@ -22,6 +23,12 @@
 
         <div class="live-main">
             <div class="ring-block">
+                @{
+                    var animKind = ResolveStepKind(process?.CurrentStepName);
+                    var animActive = process?.State == PackMLState.Execute && !string.IsNullOrEmpty(process.CurrentStepName);
+                }
+                <StepProcessAnimation Kind="animKind" Active="animActive" />
+
                 <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
                     <circle class="ring-track" cx="90" cy="90" r="78" />
                     <circle class="ring-fill @(process?.IsHeld == true ? "held" : "")"
@@ -175,6 +182,19 @@
         if (stepNumber < process.CurrentStepIndex)
             return "done";
         return "";
+    }
+
+    private static RecipeStepType ResolveStepKind(string? stepName)
+    {
+        if (string.IsNullOrWhiteSpace(stepName))
+            return RecipeStepType.Ajout;
+
+        var n = stepName.Trim().ToLowerInvariant();
+        if (n.Contains("melange") || n.Contains("mélange") || n.Contains("mix"))
+            return RecipeStepType.Melange;
+        if (n.Contains("cuisson") || n.Contains("heat") || n.Contains("cook"))
+            return RecipeStepType.Cuisson;
+        return RecipeStepType.Ajout;
     }
 
     private async Task RunCooking()

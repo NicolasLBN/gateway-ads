@@ -18,9 +18,14 @@ public class AuthController : ControllerBase
         _jwt = jwt;
     }
 
-    public record LoginRequest(
-        [property: Required] string Username,
-        [property: Required] string Password);
+    public class LoginRequest
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
 
     public record LoginResponse(string Token, string Username, DateTime ExpiresAtUtc);
 
