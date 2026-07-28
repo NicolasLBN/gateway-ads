@@ -81,3 +81,6 @@ wwwroot/reports/*.pdf
 Data/
 *.db
 *.db-lock
+
+# Local report exports
+exports/

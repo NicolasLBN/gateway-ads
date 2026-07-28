@@ -1,6 +1,7 @@
 @page "/new-recipe"
 @rendermode InteractiveServer
 @implements IDisposable
+@using BlazorApp.Components.Shared
 @using BlazorApp.Models
 @using BlazorApp.Services
 @inject AdsService AdsService
@@ -12,14 +13,14 @@
 
 <div class="recipe-details-page">
     <div class="page-toolbar">
-        <h1 class="page-title">Recipe Details</h1>
+        <h1 class="page-title">Formulation</h1>
     </div>
 
     @if (!AppState.IsConnected)
     {
         <div class="alert alert-danger">
-            <strong>HMI not connected to PLC</strong>
-            <p>Open Machine Settings and connect before sending a recipe.</p>
+            <strong>HMI non connecté au PLC</strong>
+            <p>Ouvrez Machine Settings pour connecter avant d'envoyer une formulation.</p>
         </div>
     }
 
@@ -32,147 +33,221 @@
     }
 
     <div class="form-shell">
-        <div class="form-grid">
-            <div class="form-col">
-                <div class="field large-input-field">
-                    <label>Recipe name</label>
-                    <div class="input-wrap">
-                        <input type="text" maxlength="30" @bind="recipeName" @bind:event="oninput" placeholder="Required" />
-                        @if (!string.IsNullOrEmpty(recipeName))
-                        {
-                            <button type="button" class="clear-btn" @onclick="() => recipeName = string.Empty" title="Clear">×</button>
-                        }
-                    </div>
-                    <span class="counter">@recipeName.Length / 30</span>
-                </div>
+        <div class="field large-input-field">
+            <label>Nom de la formulation</label>
+            <div class="input-wrap">
+                <input type="text" maxlength="60" @bind="recipeName" @bind:event="oninput" placeholder="Ex. Sérum HA 2%" />
+                @if (!string.IsNullOrEmpty(recipeName))
+                {
+                    <button type="button" class="clear-btn" @onclick="() => recipeName = string.Empty" title="Clear">×</button>
+                }
+            </div>
+        </div>
 
-                <div class="field large-input-field">
-                    <label>Preparation volume [L]</label>
-                    <div class="input-wrap">
-                        <input type="number" step="0.1" @bind="preparationVolume" />
-                    </div>
-                </div>
+        <div class="steps-header">
+            <h2 class="section-title">Étapes</h2>
+            <button type="button" class="btn btn-outline btn-touch" @onclick="OpenAddStep">Add Step</button>
+        </div>
 
-                <div class="field large-input-field">
-                    <label>Preparation concentration [mol/L]</label>
-                    <div class="input-wrap">
-                        <input type="number" step="0.01" @bind="preparationConcentration" />
-                    </div>
-                </div>
-
-                <h2 class="section-title">Ingredients</h2>
-                @for (int i = 0; i < ingredients.Count; i++)
+        <div class="steps-list">
+            @if (processSteps.Count == 0)
+            {
+                <p class="steps-empty">Aucune étape. Ajoutez d'abord un <strong>Ajout</strong> d'ingrédient.</p>
+            }
+            else
+            {
+                @for (var i = 0; i < processSteps.Count; i++)
                 {
                     var index = i;
-                    var ing = ingredients[index];
-                    <div class="ingredient-block">
-                        <div class="ingredient-title-row">
-                            <span>Ingredient @(index + 1)</span>
-                            @if (ingredients.Count > 1)
-                            {
-                                <button type="button" class="text-btn danger" @onclick="() => RemoveIngredient(index)">Remove</button>
-                            }
+                    var step = processSteps[index];
+                    <div class="step-card">
+                        <div class="step-card-head">
+                            <span class="step-number">@(index + 1)</span>
+                            <span class="step-type">@step.TypeLabel</span>
+                            <button type="button" class="text-btn danger" @onclick="() => RemoveStep(index)">Supprimer</button>
+                        </div>
+                        <p class="step-detail">@step.DetailSummary</p>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (showAddPanel)
+        {
+            <div class="add-panel">
+                <h3>Nouvelle étape</h3>
+
+                <div class="type-picker">
+                    <button type="button" class="type-btn @(draftType == RecipeStepType.Ajout ? "active" : "")"
+                            @onclick="() => SelectDraftType(RecipeStepType.Ajout)">
+                        Ajout
+                    </button>
+                    <button type="button" class="type-btn @(draftType == RecipeStepType.Melange ? "active" : "")"
+                            disabled="@(!CanAddMelange)"
+                            title="@(CanAddMelange ? "" : "Nécessite au moins 2 ingrédients déjà ajoutés")"
+                            @onclick="() => SelectDraftType(RecipeStepType.Melange)">
+                        Mélange
+                    </button>
+                    <button type="button" class="type-btn @(draftType == RecipeStepType.Cuisson ? "active" : "")"
+                            disabled="@(!CanAddCuisson)"
+                            title="@(CanAddCuisson ? "" : "Nécessite au moins une étape Ajout")"
+                            @onclick="() => SelectDraftType(RecipeStepType.Cuisson)">
+                        Cuisson
+                    </button>
+                </div>
+
+                @if (processSteps.Count == 0 && draftType != RecipeStepType.Ajout)
+                {
+                    <p class="rule-hint">La première étape doit être un Ajout.</p>
+                }
+
+                @if (draftType == RecipeStepType.Ajout)
+                {
+                    @for (var i = 0; i < draftIngredients.Count; i++)
+                    {
+                        var idx = i;
+                        var ing = draftIngredients[idx];
+                        <div class="ingredient-block">
+                            <div class="ingredient-title-row">
+                                <span>Ingrédient @(idx + 1)</span>
+                                @if (draftIngredients.Count > 1)
+                                {
+                                    <button type="button" class="text-btn danger" @onclick="() => draftIngredients.RemoveAt(idx)">Retirer</button>
+                                }
+                            </div>
+                            <div class="field large-input-field">
+                                <label>Nom / composé</label>
+                                <div class="input-wrap"><input type="text" @bind="ing.Name" @bind:event="oninput" /></div>
+                            </div>
+                            <div class="field-row-2">
+                                <div class="field large-input-field">
+                                    <label>Volume / Masse</label>
+                                    <div class="input-wrap"><input type="number" step="0.01" @bind="ing.Amount" /></div>
+                                </div>
+                                <div class="field large-input-field">
+                                    <label>Unité</label>
+                                    <div class="input-wrap">
+                                        <select @bind="ing.AmountUnit">
+                                            <option value="mL">mL</option>
+                                            <option value="L">L</option>
+                                            <option value="g">g</option>
+                                            <option value="kg">kg</option>
+                                            <option value="mg">mg</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field-row-2">
+                                <div class="field large-input-field">
+                                    <label>Concentration</label>
+                                    <div class="input-wrap"><input type="number" step="0.01" @bind="ing.Concentration" /></div>
+                                </div>
+                                <div class="field large-input-field">
+                                    <label>Unité conc.</label>
+                                    <div class="input-wrap">
+                                        <select @bind="ing.ConcentrationUnit">
+                                            <option value="%">%</option>
+                                            <option value="mol/L">mol/L</option>
+                                            <option value="mg/mL">mg/mL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <button type="button" class="btn btn-outline" @onclick="() => draftIngredients.Add(new Ingredient())">+ Ingrédient</button>
+                }
+                else if (draftType == RecipeStepType.Melange)
+                {
+                    <p class="helper">Cochez au moins 2 ingrédients déjà introduits.</p>
+                    <div class="checkbox-list">
+                        @foreach (var name in AvailableIngredientNames)
+                        {
+                            var n = name;
+                            <label class="check-row">
+                                <input type="checkbox" checked="@draftSelected.Contains(n)" @onchange="e => ToggleIngredient(n, e.Value is true)" />
+                                <span>@n</span>
+                            </label>
+                        }
+                    </div>
+                    <div class="field-row-2">
+                        <div class="field large-input-field">
+                            <label>Durée mélange [min]</label>
+                            <div class="input-wrap"><input type="number" step="0.1" @bind="draftMixDuration" /></div>
                         </div>
                         <div class="field large-input-field">
-                            <label>Name</label>
-                            <div class="input-wrap">
-                                <input type="text" @bind="ing.Name" @bind:event="oninput" />
-                            </div>
-                        </div>
-                        <div class="field-row-3">
-                            <div class="field large-input-field">
-                                <label>Quantity [g]</label>
-                                <div class="input-wrap"><input type="number" @bind="ing.Quantity" /></div>
-                            </div>
-                            <div class="field large-input-field">
-                                <label>Volume [ml]</label>
-                                <div class="input-wrap"><input type="number" @bind="ing.Volume" /></div>
-                            </div>
-                            <div class="field large-input-field">
-                                <label>Molar mass [g/L]</label>
-                                <div class="input-wrap"><input type="number" @bind="ing.MolarMass" /></div>
-                            </div>
+                            <label>Vitesse [RPM]</label>
+                            <div class="input-wrap"><input type="number" step="1" @bind="draftMixRpm" /></div>
                         </div>
                     </div>
                 }
-                <button type="button" class="btn btn-outline btn-touch" @onclick="AddIngredient">Add ingredient</button>
-            </div>
-
-            <div class="form-divider" aria-hidden="true"></div>
-
-            <div class="form-col">
-                <h2 class="section-title">Process sequence</h2>
-                <p class="helper">Ordered steps sent to the PLC (15 s each in Execute).</p>
-
-                <div class="steps-list">
-                    @for (int i = 0; i < steps.Count; i++)
-                    {
-                        var index = i;
-                        <div class="step-item">
-                            <span class="step-number">@(index + 1)</span>
-                            <span class="step-name">@steps[index]</span>
-                            <div class="step-actions">
-                                <button type="button" class="icon-btn" disabled="@(index == 0)" @onclick="() => MoveStepUp(index)">▲</button>
-                                <button type="button" class="icon-btn" disabled="@(index == steps.Count - 1)" @onclick="() => MoveStepDown(index)">▼</button>
-                                <button type="button" class="icon-btn danger" @onclick="() => RemoveStep(index)">×</button>
-                            </div>
+                else if (draftType == RecipeStepType.Cuisson)
+                {
+                    <div class="field-row-2">
+                        <div class="field large-input-field">
+                            <label>Température cible [°C]</label>
+                            <div class="input-wrap"><input type="number" step="0.1" @bind="draftTemp" /></div>
                         </div>
-                    }
-                    @if (steps.Count == 0)
-                    {
-                        <p class="steps-empty">Add at least one process step.</p>
-                    }
-                </div>
-
-                <div class="add-step-row">
-                    <div class="field large-input-field grow">
-                        <label>Step type</label>
-                        <div class="input-wrap">
-                            <select @bind="selectedStepPreset">
-                                <option value="Dosage">Dosage</option>
-                                <option value="Melange">Melange</option>
-                                <option value="Extraction">Extraction</option>
-                                <option value="Cuisson">Cuisson</option>
-                                <option value="__custom__">Custom…</option>
-                            </select>
+                        <div class="field large-input-field">
+                            <label>Durée [min]</label>
+                            <div class="input-wrap"><input type="number" step="0.1" @bind="draftCookDuration" /></div>
                         </div>
                     </div>
-                    @if (selectedStepPreset == "__custom__")
-                    {
-                        <div class="field large-input-field grow">
-                            <label>Custom name</label>
-                            <div class="input-wrap">
-                                <input type="text" @bind="customStepName" />
-                            </div>
-                        </div>
-                    }
-                </div>
-                <button type="button" class="btn btn-outline btn-touch" @onclick="AddStep">Add step</button>
-            </div>
-        </div>
+                }
 
-        <div class="form-actions">
-            <button type="button" class="btn btn-outline btn-touch" @onclick="SaveAsFavorite" disabled="@isBusy">
-                Save favorite
-            </button>
-            <button type="button" class="btn btn-primary btn-touch btn-send" @onclick="SendRecipe" disabled="@(!AppState.IsConnected || isBusy)">
-                @(isBusy ? "Sending…" : "Send recipe")
-            </button>
-        </div>
+                <div class="panel-actions">
+                    <button type="button" class="btn btn-outline" @onclick="CloseAddStep">Annuler</button>
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmAddStep">Valider l'étape</button>
+                </div>
+            </div>
+        }
+
+        @if (processSteps.Count > 0)
+        {
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline btn-touch" @onclick="SaveAsFavorite" disabled="@isBusy">
+                    Sauvegarder dans les favoris
+                </button>
+                <button type="button" class="btn btn-primary btn-touch btn-send" @onclick="SendRecipe" disabled="@(!AppState.IsConnected || isBusy)">
+                    @(isBusy ? "Envoi…" : "Send recipe")
+                </button>
+            </div>
+        }
     </div>
 </div>
 
+<SaveToast Visible="showToast" Title="Formulation sauvegardée dans vos favoris !"
+           Message="@toastMessage" OnClosed="() => showToast = false" />
+
 @code {
     private string recipeName = "";
-    private double preparationVolume;
-    private double preparationConcentration;
-    private List<Ingredient> ingredients = new() { new Ingredient() };
-    private List<string> steps = new();
-    private string selectedStepPreset = "Dosage";
-    private string customStepName = "";
+    private List<RecipeStep> processSteps = new();
     private bool isBusy;
     private string? error;
     private bool _idleRequested;
+    private bool showToast;
+    private string toastMessage = "";
+
+    private bool showAddPanel;
+    private RecipeStepType draftType = RecipeStepType.Ajout;
+    private List<Ingredient> draftIngredients = new() { new Ingredient() };
+    private HashSet<string> draftSelected = new(StringComparer.OrdinalIgnoreCase);
+    private double draftMixDuration = 10;
+    private double draftMixRpm = 300;
+    private double draftTemp = 40;
+    private double draftCookDuration = 15;
+
+    private bool CanAddMelange => processSteps.Count > 0 && AvailableIngredientNames.Count >= 2;
+    private bool CanAddCuisson => processSteps.Any(s => s.Type == RecipeStepType.Ajout);
+
+    private List<string> AvailableIngredientNames =>
+        processSteps
+            .Where(s => s.Type == RecipeStepType.Ajout)
+            .SelectMany(s => s.Ingredients)
+            .Select(i => i.Name.Trim())
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     protected override void OnInitialized()
     {
@@ -181,10 +256,7 @@
         {
             var r = AppState.CurrentRecipe;
             recipeName = r.Name;
-            preparationVolume = r.PreparationVolume;
-            preparationConcentration = r.PreparationConcentration;
-            ingredients = r.Ingredients.Count > 0 ? r.Ingredients.Select(CopyIngredient).ToList() : new() { new Ingredient() };
-            steps = r.Steps.ToList();
+            processSteps = CloneSteps(r.ProcessSteps);
         }
     }
 
@@ -197,86 +269,152 @@
         await AppState.EnsureIdleAsync();
     }
 
-    private static Ingredient CopyIngredient(Ingredient i) => new()
-    {
-        Name = i.Name,
-        Quantity = i.Quantity,
-        Volume = i.Volume,
-        MolarMass = i.MolarMass
-    };
-
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    private void AddIngredient() => ingredients.Add(new Ingredient());
-    private void RemoveIngredient(int index) => ingredients.RemoveAt(index);
-
-    private void AddStep()
+    private void OpenAddStep()
     {
-        var name = selectedStepPreset == "__custom__" ? customStepName.Trim() : selectedStepPreset;
-        if (string.IsNullOrWhiteSpace(name)) return;
-        steps.Add(name);
-        customStepName = "";
+        error = null;
+        draftType = processSteps.Count == 0 ? RecipeStepType.Ajout : RecipeStepType.Ajout;
+        draftIngredients = new() { new Ingredient() };
+        draftSelected.Clear();
+        draftMixDuration = 10;
+        draftMixRpm = 300;
+        draftTemp = 40;
+        draftCookDuration = 15;
+        showAddPanel = true;
     }
 
-    private void RemoveStep(int index) => steps.RemoveAt(index);
+    private void CloseAddStep() => showAddPanel = false;
 
-    private void MoveStepUp(int index)
+    private void SelectDraftType(RecipeStepType type)
     {
-        if (index <= 0) return;
-        (steps[index - 1], steps[index]) = (steps[index], steps[index - 1]);
+        if (processSteps.Count == 0 && type != RecipeStepType.Ajout)
+        {
+            error = "La première étape doit être un Ajout.";
+            draftType = RecipeStepType.Ajout;
+            return;
+        }
+
+        if (type == RecipeStepType.Melange && !CanAddMelange)
+        {
+            error = "Le mélange nécessite au moins 2 ingrédients déjà ajoutés.";
+            return;
+        }
+
+        if (type == RecipeStepType.Cuisson && !CanAddCuisson)
+        {
+            error = "La cuisson nécessite au moins une étape Ajout.";
+            return;
+        }
+
+        draftType = type;
+        error = null;
     }
 
-    private void MoveStepDown(int index)
+    private void ToggleIngredient(string name, bool selected)
     {
-        if (index >= steps.Count - 1) return;
-        (steps[index + 1], steps[index]) = (steps[index], steps[index + 1]);
+        if (selected) draftSelected.Add(name);
+        else draftSelected.Remove(name);
+    }
+
+    private void ConfirmAddStep()
+    {
+        error = null;
+
+        if (processSteps.Count == 0 && draftType != RecipeStepType.Ajout)
+        {
+            error = "La première étape doit être un Ajout.";
+            return;
+        }
+
+        RecipeStep step;
+        switch (draftType)
+        {
+            case RecipeStepType.Ajout:
+                var validIngs = draftIngredients
+                    .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                    .Select(CloneIngredient)
+                    .ToList();
+                if (validIngs.Count < 1)
+                {
+                    error = "Un Ajout nécessite au moins 1 ingrédient nommé.";
+                    return;
+                }
+                step = new RecipeStep { Type = RecipeStepType.Ajout, Ingredients = validIngs };
+                break;
+
+            case RecipeStepType.Melange:
+                if (draftSelected.Count < 2)
+                {
+                    error = "Cochez au moins 2 ingrédients pour le mélange.";
+                    return;
+                }
+                step = new RecipeStep
+                {
+                    Type = RecipeStepType.Melange,
+                    SelectedIngredientNames = draftSelected.ToList(),
+                    MixDurationMinutes = draftMixDuration,
+                    MixSpeedRpm = draftMixRpm
+                };
+                break;
+
+            case RecipeStepType.Cuisson:
+                if (draftTemp <= 0 || draftCookDuration <= 0)
+                {
+                    error = "Température et durée de cuisson sont requises (> 0).";
+                    return;
+                }
+                step = new RecipeStep
+                {
+                    Type = RecipeStepType.Cuisson,
+                    TargetTemperatureC = draftTemp,
+                    CookDurationMinutes = draftCookDuration
+                };
+                break;
+
+            default:
+                return;
+        }
+
+        processSteps.Add(step);
+        showAddPanel = false;
+    }
+
+    private void RemoveStep(int index)
+    {
+        processSteps.RemoveAt(index);
+        // If first step removed and remaining doesn't start with Ajout, keep as-is but block send validation
     }
 
     private Recipe BuildRecipe() => new()
     {
-        Name = recipeName,
-        Ingredients = ingredients.ToList(),
-        PreparationVolume = preparationVolume,
-        PreparationConcentration = preparationConcentration,
-        Steps = steps.ToList()
+        Name = recipeName.Trim(),
+        ProcessSteps = CloneSteps(processSteps)
     };
 
     private async Task SendRecipe()
     {
+        if (!ValidateRecipe(out var msg))
+        {
+            error = msg;
+            return;
+        }
+
         if (!AppState.IsConnected)
         {
-            error = "HMI is not connected to the PLC.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(recipeName))
-        {
-            error = "Recipe name is required.";
-            return;
-        }
-
-        if (ingredients.Count == 0 || string.IsNullOrWhiteSpace(ingredients[0].Name))
-        {
-            error = "Add at least one ingredient.";
-            return;
-        }
-
-        if (steps.Count == 0)
-        {
-            error = "Add at least one process step.";
+            error = "HMI non connecté au PLC.";
             return;
         }
 
         isBusy = true;
         error = null;
-
         try
         {
             var recipe = BuildRecipe();
             var result = await AdsService.SendRecipeAsync(recipe);
             if (!result)
             {
-                error = "Failed to send recipe to PLC.";
+                error = "Échec de l'envoi de la formulation au PLC.";
                 return;
             }
 
@@ -294,7 +432,7 @@
         }
         catch (Exception ex)
         {
-            error = $"Error sending recipe: {ex.Message}";
+            error = $"Erreur: {ex.Message}";
         }
         finally
         {
@@ -304,14 +442,54 @@
 
     private void SaveAsFavorite()
     {
-        if (string.IsNullOrWhiteSpace(recipeName))
+        if (!ValidateRecipe(out var msg))
         {
-            error = "Enter a recipe name before saving.";
+            error = msg;
             return;
         }
 
-        FavoritesService.AddFavorite(BuildRecipe());
+        var recipe = BuildRecipe();
+        FavoritesService.AddFavorite(recipe);
+        toastMessage = $"{recipe.Name} — {recipe.ProcessSteps.Count} étape(s)";
+        showToast = true;
     }
+
+    private bool ValidateRecipe(out string message)
+    {
+        if (string.IsNullOrWhiteSpace(recipeName))
+        {
+            message = "Le nom de la formulation est requis.";
+            return false;
+        }
+
+        if (processSteps.Count == 0)
+        {
+            message = "Ajoutez au moins une étape.";
+            return false;
+        }
+
+        if (processSteps[0].Type != RecipeStepType.Ajout)
+        {
+            message = "La première étape doit être un Ajout.";
+            return false;
+        }
+
+        message = string.Empty;
+        return true;
+    }
+
+    private static List<RecipeStep> CloneSteps(IEnumerable<RecipeStep> steps) =>
+        System.Text.Json.JsonSerializer.Deserialize<List<RecipeStep>>(
+            System.Text.Json.JsonSerializer.Serialize(steps)) ?? new();
+
+    private static Ingredient CloneIngredient(Ingredient i) => new()
+    {
+        Name = i.Name,
+        Amount = i.Amount,
+        AmountUnit = i.AmountUnit,
+        Concentration = i.Concentration,
+        ConcentrationUnit = i.ConcentrationUnit
+    };
 
     public void Dispose() => AppState.StateChanged -= OnStateChanged;
 }

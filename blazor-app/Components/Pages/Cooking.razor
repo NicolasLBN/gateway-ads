@@ -33,11 +33,11 @@
             </div>
             <div>
                 <span class="label">Steps</span>
-                <strong>@AppState.CurrentRecipe.Steps.Count</strong>
+                <strong>@AppState.CurrentRecipe.ProcessSteps.Count</strong>
             </div>
             <div>
                 <span class="label">Ingredients</span>
-                <strong>@AppState.CurrentRecipe.Ingredients.Count</strong>
+                <strong>@AppState.CurrentRecipe.TotalIngredientCount</strong>
             </div>
         </div>
     }
@@ -133,6 +133,12 @@
                 MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
                 Date = DateTime.Now,
                 Products = recipe.Ingredients.ToList(),
+                FormulationSteps = recipe.ProcessSteps.Select((s, i) => new ReportStepDetail
+                {
+                    Index = i + 1,
+                    Type = s.TypeLabel,
+                    Details = s.DetailSummary
+                }).ToList(),
                 Steps = AppState.CurrentStepTimeline.Select(s => new ProcessStep
                 {
                     Name = s.StepName,

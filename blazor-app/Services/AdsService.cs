@@ -290,9 +290,9 @@ public class AdsService : IDisposable
                     {
                         var ingredient = ingredients[i];
                         WriteSymbol($"GVL_Recipe.aIngredientName[{i + 1}]", ingredient.Name);
-                        WriteSymbol($"GVL_Recipe.aIngredientQuantity[{i + 1}]", (float)ingredient.Quantity);
-                        WriteSymbol($"GVL_Recipe.aIngredientVolume[{i + 1}]", (float)ingredient.Volume);
-                        WriteSymbol($"GVL_Recipe.aIngredientMolarMass[{i + 1}]", (float)ingredient.MolarMass);
+                        WriteSymbol($"GVL_Recipe.aIngredientQuantity[{i + 1}]", (float)ingredient.QuantityForPlc);
+                        WriteSymbol($"GVL_Recipe.aIngredientVolume[{i + 1}]", (float)ingredient.VolumeForPlc);
+                        WriteSymbol($"GVL_Recipe.aIngredientMolarMass[{i + 1}]", (float)ingredient.MolarMassForPlc);
                     }
 
                     _logger.LogInformation(

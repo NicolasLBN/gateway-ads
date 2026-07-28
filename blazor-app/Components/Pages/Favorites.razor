@@ -32,9 +32,8 @@
     @if (favorites.Count == 0)
     {
         <div class="empty-state">
-            <p>No favorite recipes yet.</p>
-            <p class="empty-subtitle">Save a recipe from Recipe details to see it here.</p>
-            <a href="/new-recipe" class="btn btn-outline">Open recipe details</a>
+            <p>No favorite formulations yet.</p>
+            <a href="/new-recipe" class="btn btn-outline">Open formulation</a>
         </div>
     }
     else
@@ -49,11 +48,11 @@
                     <div class="favorite-section">
                         <p class="section-label">Steps</p>
                         <div class="badge-list">
-                            @foreach (var step in favorite.Recipe.Steps)
+                            @foreach (var step in favorite.Recipe.ProcessSteps)
                             {
-                                <span class="badge badge-step">@step</span>
+                                <span class="badge badge-step">@step.TypeLabel</span>
                             }
-                            @if (favorite.Recipe.Steps.Count == 0)
+                            @if (favorite.Recipe.ProcessSteps.Count == 0)
                             {
                                 <span class="badge-empty">No steps</span>
                             }
@@ -65,7 +64,7 @@
                         <div class="badge-list">
                             @foreach (var ingredient in favorite.Recipe.Ingredients.Take(4))
                             {
-                                <span class="badge">@ingredient.Name (@ingredient.Quantity.ToString("F0") g)</span>
+                                <span class="badge">@ingredient.Name (@ingredient.Amount.ToString("G4") @ingredient.AmountUnit)</span>
                             }
                             @if (favorite.Recipe.Ingredients.Count > 4)
                             {
@@ -93,15 +92,9 @@
     private bool isSending;
     private string? error;
 
-    protected override void OnInitialized()
-    {
-        LoadFavorites();
-    }
+    protected override void OnInitialized() => LoadFavorites();
 
-    private void LoadFavorites()
-    {
-        favorites = FavoritesService.GetFavorites();
-    }
+    private void LoadFavorites() => favorites = FavoritesService.GetFavorites();
 
     private async Task LoadAndSend(FavoriteRecipe favorite)
     {

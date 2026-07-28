@@ -108,7 +108,11 @@
 
     private void RefreshStepNames()
     {
-        if (AppState.CurrentRecipe?.Steps.Count > 0)
+        if (AppState.CurrentRecipe?.ProcessSteps.Count > 0)
+        {
+            stepNames = AppState.CurrentRecipe.ProcessSteps.Select(s => s.TypeLabel).ToList();
+        }
+        else if (AppState.CurrentRecipe?.Steps.Count > 0)
         {
             stepNames = AppState.CurrentRecipe.Steps;
         }

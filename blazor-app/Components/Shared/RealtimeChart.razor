@@ -134,6 +134,8 @@
     {
         get
         {
+            if (AppState.CurrentRecipe?.ProcessSteps.Count > 0)
+                return AppState.CurrentRecipe.ProcessSteps.Select(s => s.TypeLabel).ToList();
             if (AppState.CurrentRecipe?.Steps.Count > 0)
                 return AppState.CurrentRecipe.Steps;
             if (AppState.LatestProcessStatus?.TotalSteps > 0)

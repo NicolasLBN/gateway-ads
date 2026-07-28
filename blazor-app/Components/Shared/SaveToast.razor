@@ -1,0 +1,51 @@
+@rendermode InteractiveServer
+
+@if (Visible)
+{
+    <div class="toast-backdrop" @onclick="Dismiss">
+        <div class="toast-card" @onclick:stopPropagation="true">
+            <div class="toast-icon" aria-hidden="true">✓</div>
+            <div class="toast-body">
+                <strong>@Title</strong>
+                <p>@Message</p>
+            </div>
+            <button type="button" class="toast-close" @onclick="Dismiss">Fermer</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string Title { get; set; } = "Formulation sauvegardée";
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClosed { get; set; }
+
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible)
+            return;
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            await Task.Delay(2500, token);
+            if (!token.IsCancellationRequested)
+                await Dismiss();
+        }
+        catch (TaskCanceledException)
+        {
+            // ignored
+        }
+    }
+
+    private async Task Dismiss()
+    {
+        _cts?.Cancel();
+        await OnClosed.InvokeAsync();
+    }
+}
