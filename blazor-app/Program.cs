@@ -5,6 +5,7 @@ using BlazorApp.Models;
 using BlazorApp.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MQTTnet.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.Configure<AdsOptions>(builder.Configuration.GetSection(AdsOptions.SectionName));
+builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection(MqttOptions.SectionName));
+
+var mqttOptions = builder.Configuration.GetSection(MqttOptions.SectionName).Get<MqttOptions>() ?? new MqttOptions();
 
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "GatewayAdsDevSecretKey_ChangeMe_32chars!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -51,7 +55,27 @@ builder.Services.AddSingleton<FavoritesService>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<AuthSessionService>();
+builder.Services.AddSingleton<ProcessStatusMqttPublisher>();
 builder.Services.AddHostedService<PlcPollingService>();
+
+if (mqttOptions.Enabled)
+{
+    builder.Services
+        .AddHostedMqttServer(options =>
+        {
+            if (mqttOptions.EnableTcp)
+            {
+                options.WithDefaultEndpoint()
+                    .WithDefaultEndpointPort(mqttOptions.TcpPort);
+            }
+            else
+            {
+                options.WithoutDefaultEndpoint();
+            }
+        })
+        .AddMqttConnectionHandler()
+        .AddConnections();
+}
 
 var app = builder.Build();
 
@@ -73,5 +97,20 @@ app.UseAntiforgery();
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+if (mqttOptions.Enabled)
+{
+    var wsPath = string.IsNullOrWhiteSpace(mqttOptions.WebSocketPath) ? "/mqtt" : mqttOptions.WebSocketPath;
+    app.MapMqtt(wsPath);
+    app.UseMqttServer(server =>
+    {
+        app.Services.GetRequiredService<ProcessStatusMqttPublisher>().Attach(server);
+        app.Logger.LogInformation(
+            "MQTT broker ready: ws://localhost:5223{Path} topic={Topic} tcp={Tcp}",
+            wsPath,
+            mqttOptions.StatusTopic,
+            mqttOptions.EnableTcp ? mqttOptions.TcpPort.ToString() : "off");
+    });
+}
 
 app.Run();
