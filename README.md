@@ -1,57 +1,25 @@
 # Gateway ADS
 
-Application industrielle de **gestion de formulations**, pilotage PLC TwinCAT via **ADS / PackML**, HMI Blazor, et portail labo React (API REST).
-
-## Projets
+Formulations industrielles + pilotage TwinCAT (ADS / PackML).
 
 | Dossier | Rôle |
 |---------|------|
-| [`blazor-app/`](./blazor-app/README.md) | HMI opérateur Blazor Server (.NET 8) + API REST JWT + ADS |
-| [`react-portal/`](./react-portal/README.md) | Portail consultation React (formulations, favoris, rapports, PackML) |
-| [`ReceipeManager/`](./ReceipeManager) | Projet TwinCAT ST (PackML + GVL Recipe/Process/Command/State) |
-
-## Démarrage rapide
-
-### 1. PLC (TwinCAT)
-- Activer `ReceipeManager`, port ADS **851**, runtime **Run**
-- Message Router TwinCAT démarré
-
-### 2. HMI + API
-```bash
-cd blazor-app
-dotnet watch run
-```
-→ `http://localhost:5223`
-
-### 3. Portail React (optionnel)
-```bash
-cd react-portal
-npm install
-npm run dev
-```
-→ `http://localhost:5173`  
-Créer un compte via le header Blazor, puis se connecter au portail.
-
-## Architecture (vue d’ensemble)
+| [`blazor-app/`](./blazor-app) | HMI + API REST + broker MQTT + ADS |
+| [`react-portal/`](./react-portal) | Portail labo (lecture seule) |
+| [`ReceipeManager/`](./ReceipeManager) | PLC TwinCAT |
 
 ```
-Opérateur (atelier)          Labo / bureau / LIMS
-        │                            │
-        ▼                            ▼
-  Blazor HMI  ◄── ADS ──►  TwinCAT PLC
-        │
-        └── REST / JWT ──►  React portal
+Blazor HMI  ◄── ADS ──►  TwinCAT PLC
+    │
+    ├── REST / JWT ──► React (listes, PDF)
+    └── MQTT (embarqué) ──► React (PackML live)
 ```
 
-- **Blazor** : saisie formulation, envoi PLC, Run/Hold/Stop, animations de procédé, favoris LiteDB, PDF.
-- **React** : lecture seule (formulations, favoris, historique, statut PackML, download PDF).
-- **PLC** : machine d’états PackML (Stopped → Idle → Execute → Complete).
+## Démarrage
 
-## Documentation détaillée
+1. TwinCAT `ReceipeManager` en **Run**, port ADS **851**
+2. `cd blazor-app && dotnet watch run` → http://localhost:5223  
+3. (optionnel) `cd react-portal && npm install && npm run dev` → http://localhost:5173  
+   Compte : **Register** dans le header Blazor, puis login React.
 
-- HMI / ADS / PackML / persistence → [`blazor-app/README.md`](./blazor-app/README.md)
-- Client REST React → [`react-portal/README.md`](./react-portal/README.md)
-
-## Licence
-
-MIT
+Détails : [`blazor-app/README.md`](./blazor-app/README.md) · [`react-portal/README.md`](./react-portal/README.md)
