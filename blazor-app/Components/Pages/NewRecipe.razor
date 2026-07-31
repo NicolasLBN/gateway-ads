@@ -13,14 +13,14 @@
 
 <div class="recipe-details-page">
     <div class="page-toolbar">
-        <h1 class="page-title">Formulation</h1>
+        <h1 class="page-title">Recipe</h1>
     </div>
 
     @if (!AppState.IsConnected)
     {
         <div class="alert alert-danger">
             <strong>HMI non connecté au PLC</strong>
-            <p>Ouvrez Machine Settings pour connecter avant d'envoyer une formulation.</p>
+            <p>Ouvrez Machine Settings pour connecter avant d'envoyer une recette.</p>
         </div>
     }
 
@@ -34,7 +34,7 @@
 
     <div class="form-shell">
         <div class="field large-input-field">
-            <label>Nom de la formulation</label>
+            <label>Nom de la recette</label>
             <div class="input-wrap">
                 <input type="text" maxlength="60" @bind="recipeName" @bind:event="oninput" placeholder="Ex. Sérum HA 2%" />
                 @if (!string.IsNullOrEmpty(recipeName))
@@ -216,7 +216,7 @@
     </div>
 </div>
 
-<SaveToast Visible="showToast" Title="Formulation sauvegardée dans vos favoris !"
+<SaveToast Visible="showToast" Title="Recette sauvegardée dans vos favoris !"
            Message="@toastMessage" OnClosed="() => showToast = false" />
 
 @code {
@@ -414,7 +414,7 @@
             var result = await AdsService.SendRecipeAsync(recipe);
             if (!result)
             {
-                error = "Échec de l'envoi de la formulation au PLC.";
+                error = "Échec de l'envoi de la recette au PLC.";
                 return;
             }
 
@@ -458,7 +458,7 @@
     {
         if (string.IsNullOrWhiteSpace(recipeName))
         {
-            message = "Le nom de la formulation est requis.";
+            message = "Le nom de la recette est requis.";
             return false;
         }
 

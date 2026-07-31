@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LoginForm } from './components/LoginForm';
 import { PackMLStatusBadge } from './components/PackMLStatusBadge';
-import { useFavorites, useFormulations, useProcessStatus, useReports } from './hooks/useApi';
+import { useFavorites, useProcessStatus, useRecipes, useReports } from './hooks/useApi';
 import { api, getToken, setToken } from './services/api';
 import './App.css';
 
@@ -10,7 +10,7 @@ const queryClient = new QueryClient();
 
 function Dashboard({ username, onLogout }: { username: string; onLogout: () => void }) {
   const status = useProcessStatus(true);
-  const formulations = useFormulations(true);
+  const recipes = useRecipes(true);
   const favorites = useFavorites(true);
   const reports = useReports(true);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -43,11 +43,11 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
 
       <section className="grid">
         <article>
-          <h2>Formulations</h2>
-          {formulations.isLoading ? <p className="muted">Loading…</p> : null}
-          {formulations.error ? <p className="error">{(formulations.error as Error).message}</p> : null}
+          <h2>Recipes</h2>
+          {recipes.isLoading ? <p className="muted">Loading…</p> : null}
+          {recipes.error ? <p className="error">{(recipes.error as Error).message}</p> : null}
           <ul>
-            {(formulations.data ?? []).map((f) => (
+            {(recipes.data ?? []).map((f) => (
               <li key={f.id}>
                 <strong>{f.name}</strong>
                 <span>{f.stepCount} steps · {f.ingredientCount} ingredients</span>

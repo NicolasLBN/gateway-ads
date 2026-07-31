@@ -34,20 +34,20 @@
                     <div class="ingredients-section">
                         <p class="ingredients-label">Steps:</p>
                         <div class="ingredient-badges">
-                            @foreach (var step in report.FormulationSteps.Take(4))
+                            @foreach (var step in report.RecipeSteps.Take(4))
                             {
                                 <span class="badge">@step.Type</span>
                             }
-                            @if (report.FormulationSteps.Count == 0)
+                            @if (report.RecipeSteps.Count == 0)
                             {
                                 @foreach (var ingredient in report.Products.Take(3))
                                 {
                                     <span class="badge">@ingredient.Name</span>
                                 }
                             }
-                            @if (report.FormulationSteps.Count > 4)
+                            @if (report.RecipeSteps.Count > 4)
                             {
-                                <span class="badge badge-more">+@(report.FormulationSteps.Count - 4)</span>
+                                <span class="badge badge-more">+@(report.RecipeSteps.Count - 4)</span>
                             }
                         </div>
                     </div>

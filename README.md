@@ -1,6 +1,6 @@
 # Gateway ADS
 
-Formulations industrielles + pilotage TwinCAT (ADS / PackML).
+Recipes industrielles + pilotage TwinCAT (ADS / PackML).
 
 | Dossier | Rôle |
 |---------|------|

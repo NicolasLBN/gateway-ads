@@ -133,7 +133,7 @@
                 MachineName = AppState.SelectedMachine?.Name ?? "Unknown",
                 Date = DateTime.Now,
                 Products = recipe.Ingredients.ToList(),
-                FormulationSteps = recipe.ProcessSteps.Select((s, i) => new ReportStepDetail
+                RecipeSteps = recipe.ProcessSteps.Select((s, i) => new ReportStepDetail
                 {
                     Index = i + 1,
                     Type = s.TypeLabel,

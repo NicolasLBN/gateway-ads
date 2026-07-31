@@ -22,7 +22,7 @@ Prérequis : .NET 8, TwinCAT Message Router, PLC `ReceipeManager` en Run (port *
 ## Parcours HMI
 
 1. **Home** → Stop PackML  
-2. **Formulation** → étapes Ajout / Mélange / Cuisson → Send recipe  
+2. **Recipe** → étapes Ajout / Mélange / Cuisson → Send recipe  
 3. **Cooking** → Run / Hold / Stop → Generate PDF  
 4. **Favorites** / **History**
 
@@ -47,7 +47,7 @@ Base `http://localhost:5223` · CORS `localhost:5173`
 | | | |
 |--|--|--|
 | `POST` | `/api/auth/login` | JWT |
-| `GET` | `/api/formulations` | catalogue |
+| `GET` | `/api/recipes` | catalogue |
 | `GET` | `/api/favorites` | favoris |
 | `GET` | `/api/reports` | historique |
 | `GET` | `/api/reports/{id}/download` | PDF |

@@ -8,7 +8,7 @@ public class Report
     public DateTime Date { get; set; } = DateTime.Now;
     public List<Ingredient> Products { get; set; } = new();
     public List<ProcessStep> Steps { get; set; } = new();
-    public List<ReportStepDetail> FormulationSteps { get; set; } = new();
+    public List<ReportStepDetail> RecipeSteps { get; set; } = new();
 }
 
 public class ProcessStep

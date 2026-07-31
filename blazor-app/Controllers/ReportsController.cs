@@ -29,7 +29,7 @@ public class ReportsController : ControllerBase
             recipeName = r.RecipeName,
             machineName = r.MachineName,
             date = r.Date,
-            stepCount = r.FormulationSteps.Count > 0 ? r.FormulationSteps.Count : r.Steps.Count,
+            stepCount = r.RecipeSteps.Count > 0 ? r.RecipeSteps.Count : r.Steps.Count,
             hasPdf = System.IO.File.Exists(_pdf.GetReportPath($"report_{r.Id}.pdf"))
         });
         return Ok(items);

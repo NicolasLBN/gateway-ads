@@ -29,7 +29,7 @@ export function LoginForm({ onLoggedIn }: Props) {
   return (
     <form className="login-card" onSubmit={onSubmit}>
       <h1>Lab portal</h1>
-      <p className="lead">Connexion API REST — consultation formulations / rapports (hors HMI machine).</p>
+      <p className="lead">Connexion API REST — consultation recipes / reports (hors HMI machine).</p>
       <label>
         Username
         <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />

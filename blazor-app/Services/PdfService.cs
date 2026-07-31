@@ -32,7 +32,7 @@ public class PdfService
         {
             var stamp = report.Date.ToString("yyyyMMdd_HHmmss");
             var safeName = string.Concat(report.RecipeName.Select(c => char.IsLetterOrDigit(c) ? c : '_'));
-            var baseName = $"formulation_{safeName}_{stamp}";
+            var baseName = $"recipe_{safeName}_{stamp}";
 
             var pdfWebName = $"report_{report.Id}.pdf";
             var pdfWebPath = Path.Combine(_reportsDirectory, pdfWebName);
@@ -76,15 +76,15 @@ public class PdfService
                         column.Item().Background(Colors.Grey.Lighten3).Padding(10).Column(info =>
                         {
                             info.Spacing(4);
-                            info.Item().Text($"Formulation: {report.RecipeName}").SemiBold().FontSize(13);
+                            info.Item().Text($"Recipe: {report.RecipeName}").SemiBold().FontSize(13);
                             info.Item().Text($"Machine: {report.MachineName}");
                             info.Item().Text($"Date/heure: {report.Date:yyyy-MM-dd HH:mm:ss}");
                         });
 
-                        if (report.FormulationSteps.Count > 0)
+                        if (report.RecipeSteps.Count > 0)
                         {
                             column.Item().Text("Séquence chronologique des étapes").SemiBold().FontSize(14);
-                            foreach (var step in report.FormulationSteps)
+                            foreach (var step in report.RecipeSteps)
                             {
                                 column.Item().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(6).Column(s =>
                                 {

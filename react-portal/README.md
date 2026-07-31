@@ -1,6 +1,6 @@
 # react-portal
 
-Portail labo React (lecture seule) : formulations, favoris, rapports PDF, PackML live.
+Portail labo React (lecture seule) : recipes, favoris, rapports PDF, PackML live.
 
 La commande PLC reste uniquement sur l’HMI Blazor.
 
@@ -29,7 +29,7 @@ Node : 20.19+ ou 22.12+ (Vite 6).
 
 | Source | Usage |
 |--------|--------|
-| REST + JWT | login, formulations, favoris, liste rapports, download PDF |
+| REST + JWT | login, recipes, favoris, liste rapports, download PDF |
 | MQTT | statut PackML (`useProcessStatus`) |
 
 Broker = Blazor embarqué (`ws://localhost:5223/mqtt`), pas un service séparé.
@@ -38,7 +38,7 @@ Broker = Blazor embarqué (`ws://localhost:5223/mqtt`), pas un service séparé.
 
 ```
 src/services/api.ts           REST + JWT
-src/hooks/useApi.ts           Query formulations / favorites / reports
+src/hooks/useApi.ts           Query recipes / favorites / reports
 src/hooks/useProcessStatus.ts MQTT PackML
 src/components/               LoginForm, PackMLStatusBadge
 ```

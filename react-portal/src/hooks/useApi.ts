@@ -3,10 +3,10 @@ import { api } from '../services/api';
 
 export { useProcessStatus } from './useProcessStatus';
 
-export function useFormulations(enabled = true) {
+export function useRecipes(enabled = true) {
   return useQuery({
-    queryKey: ['formulations'],
-    queryFn: api.getFormulations,
+    queryKey: ['recipes'],
+    queryFn: api.getRecipes,
     enabled,
   });
 }

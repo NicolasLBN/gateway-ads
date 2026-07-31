@@ -44,7 +44,7 @@ export type LoginResponse = {
   expiresAtUtc: string;
 };
 
-export type Formulation = {
+export type RecipeSummary = {
   id: string;
   name: string;
   stepCount: number;
@@ -100,7 +100,7 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
 
-  getFormulations: () => request<Formulation[]>('/api/formulations'),
+  getRecipes: () => request<RecipeSummary[]>('/api/recipes'),
   getFavorites: () => request<Favorite[]>('/api/favorites'),
   getReports: () => request<ReportSummary[]>('/api/reports'),
 

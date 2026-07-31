@@ -8,18 +8,18 @@ namespace BlazorApp.Controllers;
 [ApiController]
 [Authorize]
 [Route("api")]
-public class FormulationsController : ControllerBase
+public class RecipesController : ControllerBase
 {
     private readonly FavoritesService _favorites;
 
-    public FormulationsController(FavoritesService favorites)
+    public RecipesController(FavoritesService favorites)
     {
         _favorites = favorites;
     }
 
-    /// <summary>Library of formulations (from favorites catalog).</summary>
-    [HttpGet("formulations")]
-    public ActionResult<IEnumerable<object>> GetFormulations()
+    /// <summary>Library of recipes (from favorites catalog).</summary>
+    [HttpGet("recipes")]
+    public ActionResult<IEnumerable<object>> GetRecipes()
     {
         var items = _favorites.GetFavorites().Select(f => new
         {

@@ -79,7 +79,7 @@ public class FavoritesService : IDisposable
                 });
             }
 
-            _logger.LogInformation("Seeded {Count} professional favorite formulations", 3);
+            _logger.LogInformation("Seeded {Count} professional favorite recipes", 3);
         }
     }
 
