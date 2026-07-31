@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 
+export { useProcessStatus } from './useProcessStatus';
+
 export function useFormulations(enabled = true) {
   return useQuery({
     queryKey: ['formulations'],
@@ -22,14 +24,5 @@ export function useReports(enabled = true) {
     queryKey: ['reports'],
     queryFn: api.getReports,
     enabled,
-  });
-}
-
-export function useProcessStatus(enabled = true) {
-  return useQuery({
-    queryKey: ['process-status'],
-    queryFn: api.getProcessStatus,
-    enabled,
-    refetchInterval: 2000,
   });
 }

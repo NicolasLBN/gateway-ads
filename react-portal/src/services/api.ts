@@ -103,7 +103,6 @@ export const api = {
   getFormulations: () => request<Formulation[]>('/api/formulations'),
   getFavorites: () => request<Favorite[]>('/api/favorites'),
   getReports: () => request<ReportSummary[]>('/api/reports'),
-  getProcessStatus: () => request<ProcessStatus>('/api/process/status'),
 
   async downloadReport(id: string, fallbackName = 'report.pdf') {
     const token = getToken();

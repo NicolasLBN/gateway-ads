@@ -34,7 +34,12 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
         <button className="ghost" type="button" onClick={onLogout}>Sign out</button>
       </header>
 
-      <PackMLStatusBadge status={status.data} loading={status.isLoading} />
+      <PackMLStatusBadge
+        status={status.data}
+        loading={status.isLoading}
+        mqttConnected={status.isMqttConnected}
+        error={status.error?.message ?? null}
+      />
 
       <section className="grid">
         <article>

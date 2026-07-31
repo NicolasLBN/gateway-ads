@@ -9,21 +9,29 @@ const tone = (state?: string) => {
   return 'neutral';
 };
 
-type Props = { status?: ProcessStatus; loading?: boolean };
+type Props = {
+  status?: ProcessStatus;
+  loading?: boolean;
+  mqttConnected?: boolean;
+  error?: string | null;
+};
 
-export function PackMLStatusBadge({ status, loading }: Props) {
+export function PackMLStatusBadge({ status, loading, mqttConnected, error }: Props) {
   const label = loading
-    ? 'Polling…'
+    ? 'MQTT…'
     : status
       ? `${status.state}${status.isHeld ? ' (Held)' : ''}`
-      : 'Unknown';
+      : error
+        ? 'No data'
+        : 'Unknown';
 
   return (
     <div className={`packml-badge tone-${tone(status?.state)}`}>
       <span className="dot" />
       <div>
-        <div className="eyebrow">PackML</div>
+        <div className="eyebrow">PackML · MQTT {mqttConnected ? 'live' : 'offline'}</div>
         <div className="value">{label}</div>
+        {error ? <div className="sub">{error}</div> : null}
         {status?.currentStepName ? (
           <div className="sub">
             {status.currentStepName} · {Math.round((status.progress ?? 0) * 100)}%
