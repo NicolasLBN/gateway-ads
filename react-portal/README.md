@@ -1,10 +1,10 @@
 # react-portal
 
-Portail labo React (lecture seule) : recipes, favoris, rapports PDF, PackML live.
+Read-only lab portal (React + Vite): recipes, favorites, PDF reports, live PackML.
 
-La commande PLC reste uniquement sur l’HMI Blazor.
+PLC commands stay on the Blazor HMI only.
 
-## Lancer
+## Run
 
 ```bash
 cd react-portal
@@ -13,9 +13,9 @@ npm run dev
 ```
 
 → http://localhost:5173  
-Backend : Blazor sur http://localhost:5223 (Register un compte dans le header HMI).
+Backend: Blazor at http://localhost:5223 (register a user in the HMI header first).
 
-`.env` :
+`.env`:
 
 ```env
 VITE_API_BASE=http://localhost:5223
@@ -23,16 +23,23 @@ VITE_MQTT_URL=ws://localhost:5223/mqtt
 VITE_MQTT_STATUS_TOPIC=gateway/process/status
 ```
 
-Node : 20.19+ ou 22.12+ (Vite 6).
+Node: 20.19+ or 22.12+ (Vite 6).
 
-## Données
+## How it connects
 
 | Source | Usage |
 |--------|--------|
-| REST + JWT | login, recipes, favoris, liste rapports, download PDF |
-| MQTT | statut PackML (`useProcessStatus`) |
+| REST + JWT | login, recipes, favorites, report list, PDF download |
+| MQTT | live PackML status (`useProcessStatus`) |
 
-Broker = Blazor embarqué (`ws://localhost:5223/mqtt`), pas un service séparé.
+Broker is embedded in Blazor (`ws://localhost:5223/mqtt`) — not a separate process.
+
+```
+React
+  ├─ api.ts              → POST /api/auth/login, GET /api/recipes, …
+  ├─ useProcessStatus    → MQTT subscribe gateway/process/status
+  └─ downloadReport      → GET /api/reports/{id}/download → blob
+```
 
 ## Structure
 
