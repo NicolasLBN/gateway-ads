@@ -19,6 +19,15 @@ html, body {
     font-family: "Segoe UI", "IBM Plex Sans", system-ui, sans-serif;
     background: var(--hmi-bg);
     color: var(--hmi-text);
+    margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
 }
 
 a, .btn-link {
@@ -86,3 +95,32 @@ h1:focus {
 .hmi-state-pill.warn { background: rgba(245, 159, 0, 0.2); color: #ffec99; }
 .hmi-state-pill.idle { background: rgba(28, 126, 214, 0.2); color: #a5d8ff; }
 .hmi-state-pill.neutral { background: rgba(92, 107, 126, 0.25); color: #ced4da; }
+
+/* Phones (Galaxy A54 ~384–412px CSS width) */
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 22px !important;
+    }
+
+    .btn-touch,
+    .btn-send {
+        width: 100%;
+        min-width: 0 !important;
+    }
+
+    .form-actions,
+    .panel-actions,
+    .tools-row,
+    .favorite-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-actions .btn,
+    .panel-actions .btn,
+    .tools-row .btn,
+    .favorite-actions .btn {
+        width: 100%;
+    }
+}
+

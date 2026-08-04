@@ -331,3 +331,26 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 480px) {
+    .page-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .form-shell {
+        padding: 16px 12px;
+        border-radius: 10px;
+    }
+
+    .steps-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-send {
+        width: 100%;
+        min-width: 0;
+    }
+}

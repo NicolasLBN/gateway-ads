@@ -102,3 +102,18 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 480px) {
+    .page-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .page-title {
+        font-size: 22px;
+    }
+
+    .recipe-summary > div {
+        padding: 12px;
+    }
+}

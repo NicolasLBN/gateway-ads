@@ -2,6 +2,10 @@ using BlazorApp.Models;
 
 namespace BlazorApp.Services;
 
+/// <summary>
+/// In-memory report catalog persisted to <c>Data/report-history.json</c>.
+/// PDF binaries are handled separately by <see cref="PdfService"/>.
+/// </summary>
 public class ReportService
 {
     private readonly List<Report> _reports = new();
@@ -14,10 +18,12 @@ public class ReportService
         _logger = logger;
         var dataDir = Path.Combine(env.ContentRootPath, "Data");
         Directory.CreateDirectory(dataDir);
+        // Metadata only (recipe, steps, timeline) — not the PDF bytes.
         _historyPath = Path.Combine(dataDir, "report-history.json");
         Load();
     }
 
+    /// <summary>Newest reports first (History page + GET /api/reports).</summary>
     public List<Report> GetReports()
     {
         lock (_lock)
@@ -34,6 +40,10 @@ public class ReportService
         }
     }
 
+    /// <summary>
+    /// Appends a report and rewrites the JSON file immediately.
+    /// Called from Cooking after a batch completes (before PDF generation).
+    /// </summary>
     public void AddReport(Report report)
     {
         lock (_lock)
@@ -45,6 +55,7 @@ public class ReportService
         _logger.LogInformation("Report added: {Name}", report.RecipeName);
     }
 
+    /// <summary>Hydrate the in-memory list from disk at startup.</summary>
     private void Load()
     {
         try
@@ -63,6 +74,7 @@ public class ReportService
         }
     }
 
+    /// <summary>Full rewrite of report-history.json (simple, small catalogs).</summary>
     private void Persist()
     {
         try

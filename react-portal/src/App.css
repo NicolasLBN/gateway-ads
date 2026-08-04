@@ -6,9 +6,16 @@
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
   min-height: 100vh;
+  min-height: 100dvh;
   background: radial-gradient(circle at top left, #1a2740, #0f1419 55%);
 }
 
@@ -16,12 +23,16 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
 .portal {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0;
 }
 
 .top {
@@ -53,6 +64,7 @@ body {
   padding: 0 14px;
   cursor: pointer;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .grid {
@@ -70,6 +82,7 @@ article {
   border: 1px solid #2f3d52;
   border-radius: 12px;
   padding: 16px;
+  min-width: 0;
 }
 
 article h2 {
@@ -93,6 +106,18 @@ li, .report-row {
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #243044;
+  min-width: 0;
+}
+
+li > div,
+.report-row > div {
+  min-width: 0;
+}
+
+li strong,
+.report-row strong {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
 li span, .report-row span {
@@ -110,6 +135,7 @@ li span, .report-row span {
   font-weight: 700;
   padding: 0 14px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .muted { color: #8b9bb4; }
@@ -117,4 +143,41 @@ li span, .report-row span {
 
 @media (max-width: 800px) {
   .grid { grid-template-columns: 1fr; }
+}
+
+/* Samsung Galaxy A54 and similar phones (~384–430px) */
+@media (max-width: 480px) {
+  #root {
+    padding: 14px 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .top {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .brand {
+    font-size: 12px;
+  }
+
+  .user {
+    font-size: 13px;
+  }
+
+  article {
+    padding: 14px;
+  }
+
+  li, .report-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .report-row button {
+    width: 100%;
+  }
 }

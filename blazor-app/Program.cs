@@ -15,11 +15,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
+    // Allow React portal from localhost or LAN devices (any host on ports 5173/3000).
     options.AddPolicy("ReactPortal", policy =>
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://127.0.0.1:5173")
+        policy.SetIsOriginAllowed(static origin =>
+            {
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                    return false;
+                return uri.Port is 5173 or 3000;
+            })
             .AllowAnyHeader()
             .AllowAnyMethod());
 });

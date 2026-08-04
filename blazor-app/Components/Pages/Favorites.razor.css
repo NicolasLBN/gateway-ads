@@ -42,7 +42,7 @@
 
 .favorites-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 16px;
 }
 
@@ -182,4 +182,20 @@
     color: inherit;
     font-size: 20px;
     cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    .page-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .favorite-card {
+        padding: 14px;
+    }
+
+    .empty-state {
+        padding: 32px 16px;
+    }
 }

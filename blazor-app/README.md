@@ -9,7 +9,8 @@ cd blazor-app
 dotnet watch run
 ```
 
-→ http://localhost:5223
+Listens on **`http://0.0.0.0:5223`** (all interfaces).  
+Local: http://localhost:5223 · LAN: `http://<PC-IP>:5223`
 
 Requires: .NET 8, TwinCAT Message Router, PLC `ReceipeManager` in Run (port **851**).
 
@@ -42,7 +43,7 @@ Requires: .NET 8, TwinCAT Message Router, PLC `ReceipeManager` in Run (port **85
 
 ## REST API
 
-Base `http://localhost:5223` · CORS `localhost:5173`
+Base `http://<host>:5223` · CORS allows any host on ports **5173** / **3000** (LAN React).
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|

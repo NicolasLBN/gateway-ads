@@ -56,3 +56,14 @@
   margin: 0;
   color: #ffa8a8;
 }
+
+@media (max-width: 480px) {
+  .login-card {
+    margin: 6vh auto;
+    padding: 20px 16px;
+  }
+
+  .login-card h1 {
+    font-size: 24px;
+  }
+}

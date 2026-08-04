@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import mqtt, { type MqttClient } from 'mqtt';
+import { getMqttStatusTopic, getMqttUrl } from '../config';
 import type { ProcessStatus } from '../services/api';
-
-const MQTT_URL = import.meta.env.VITE_MQTT_URL ?? 'ws://localhost:5223/mqtt';
-const STATUS_TOPIC =
-  import.meta.env.VITE_MQTT_STATUS_TOPIC ?? 'gateway/process/status';
 
 export type ProcessStatusQuery = {
   data: ProcessStatus | undefined;
@@ -32,9 +29,12 @@ export function useProcessStatus(enabled = true): ProcessStatusQuery {
     setIsLoading(true);
     setError(null);
 
+    const mqttUrl = getMqttUrl();
+    const statusTopic = getMqttStatusTopic();
+
     let client: MqttClient;
     try {
-      client = mqtt.connect(MQTT_URL, {
+      client = mqtt.connect(mqttUrl, {
         protocolVersion: 4,
         reconnectPeriod: 2000,
         connectTimeout: 10_000,
@@ -49,7 +49,7 @@ export function useProcessStatus(enabled = true): ProcessStatusQuery {
     const onConnect = () => {
       setIsMqttConnected(true);
       setError(null);
-      client.subscribe(STATUS_TOPIC, { qos: 1 }, (err) => {
+      client.subscribe(statusTopic, { qos: 1 }, (err) => {
         if (err) setError(err);
       });
     };
@@ -68,7 +68,7 @@ export function useProcessStatus(enabled = true): ProcessStatusQuery {
     };
 
     const onMessage = (topic: string, payload: Buffer) => {
-      if (topic !== STATUS_TOPIC) return;
+      if (topic !== statusTopic) return;
       try {
         const parsed = JSON.parse(payload.toString()) as ProcessStatus;
         setData(parsed);

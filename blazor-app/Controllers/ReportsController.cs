@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BlazorApp.Controllers;
 
+/// <summary>
+/// JWT-protected report API for the React portal (list metadata + PDF download).
+/// History metadata comes from <see cref="ReportService"/>; PDF files from <see cref="PdfService"/>.
+/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/reports")]
@@ -20,6 +24,7 @@ public class ReportsController : ControllerBase
         _env = env;
     }
 
+    /// <summary>Lightweight summaries for the portal list (no PDF bytes).</summary>
     [HttpGet]
     public ActionResult<IEnumerable<object>> GetReports()
     {
@@ -35,6 +40,10 @@ public class ReportsController : ControllerBase
         return Ok(items);
     }
 
+    /// <summary>
+    /// Streams the PDF as <c>application/pdf</c>.
+    /// Regenerates from stored report metadata if the file is missing on disk.
+    /// </summary>
     [HttpGet("{id}/download")]
     public IActionResult Download(string id)
     {
@@ -45,7 +54,7 @@ public class ReportsController : ControllerBase
         var path = _pdf.GetReportPath($"report_{id}.pdf");
         if (!System.IO.File.Exists(path))
         {
-            // Regenerate if missing
+            // PDF may have been deleted; rebuild from JSON history entry
             try
             {
                 _pdf.GenerateReport(report);

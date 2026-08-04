@@ -74,8 +74,20 @@ Industrial recipe management with TwinCAT ADS / PackML control.
 ## Quick start
 
 1. TwinCAT `ReceipeManager` in **Run**, ADS port **851**
-2. `cd blazor-app && dotnet watch run` → http://localhost:5223
-3. (optional) `cd react-portal && npm install && npm run dev` → http://localhost:5173  
+2. `cd blazor-app && dotnet watch run` → binds **`0.0.0.0:5223`**
+3. (optional) `cd react-portal && npm install && npm run dev` → binds **`0.0.0.0:5173`**  
    Create a user via Blazor header **Register**, then sign in on React.
+
+### LAN / phone access
+
+On the same Wi‑Fi, open (replace with your PC IP):
+
+| App | URL |
+|-----|-----|
+| Blazor HMI + API + MQTT | `http://<PC-IP>:5223` |
+| React portal | `http://<PC-IP>:5173` |
+
+React resolves API/MQTT from the page hostname automatically (no `localhost` on the phone).  
+Allow Windows Firewall for ports **5223** and **5173** if the phone cannot connect.
 
 More detail: [`blazor-app/README.md`](./blazor-app/README.md) · [`react-portal/README.md`](./react-portal/README.md)

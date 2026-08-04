@@ -121,8 +121,8 @@
 
     .reports-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+        gap: 16px;
     }
 
     .report-card {
@@ -202,5 +202,30 @@
 
     .btn-download:hover {
         background-color: #1c7ed6;
+    }
+
+    @@media (max-width: 480px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 22px;
+        }
+
+        .report-card {
+            padding: 16px;
+        }
+
+        .report-card h3 {
+            font-size: 18px;
+        }
+
+        .empty-state {
+            padding: 32px 16px;
+        }
     }
 </style>

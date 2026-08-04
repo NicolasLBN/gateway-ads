@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5223';
+import { getApiBase } from '../config';
 
 const TOKEN_KEY = 'gateway_ads_token';
 
@@ -20,7 +20,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${getApiBase()}${path}`, { ...options, headers });
   if (!res.ok) {
     let message = res.statusText;
     try {
@@ -106,7 +106,7 @@ export const api = {
 
   async downloadReport(id: string, fallbackName = 'report.pdf') {
     const token = getToken();
-    const res = await fetch(`${API_BASE}/api/reports/${id}/download`, {
+    const res = await fetch(`${getApiBase()}/api/reports/${id}/download`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
     if (!res.ok) throw new Error('Download failed');

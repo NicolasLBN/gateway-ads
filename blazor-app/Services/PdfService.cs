@@ -6,6 +6,10 @@ using QuestPDF.Infrastructure;
 
 namespace BlazorApp.Services;
 
+/// <summary>
+/// Builds production PDF reports with QuestPDF.
+/// Writes both a web-served copy (<c>wwwroot/reports</c>) and a local export pair (PDF + JSON under <c>exports/</c>).
+/// </summary>
 public class PdfService
 {
     private readonly ILogger<PdfService> _logger;
@@ -17,7 +21,9 @@ public class PdfService
     public PdfService(ILogger<PdfService> logger, IWebHostEnvironment env)
     {
         _logger = logger;
+        // Served / downloaded via GET /api/reports/{id}/download
         _reportsDirectory = Path.Combine(env.WebRootPath, "reports");
+        // Local archive next to the app (not exposed over HTTP)
         _exportsDirectory = Path.Combine(env.ContentRootPath, "exports");
 
         Directory.CreateDirectory(_reportsDirectory);
@@ -26,6 +32,10 @@ public class PdfService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
+    /// <summary>
+    /// Generates <c>report_{id}.pdf</c> for the API, plus timestamped PDF/JSON under <c>exports/</c>.
+    /// Returns the web file name (e.g. report_abc.pdf).
+    /// </summary>
     public string GenerateReport(Report report)
     {
         try
@@ -54,6 +64,7 @@ public class PdfService
         }
     }
 
+    /// <summary>A4 layout: recipe header, planned steps, PackML execution timeline.</summary>
     private static Document BuildDocument(Report report) =>
         Document.Create(container =>
         {
@@ -81,6 +92,7 @@ public class PdfService
                             info.Item().Text($"Date/heure: {report.Date:yyyy-MM-dd HH:mm:ss}");
                         });
 
+                        // Planned recipe definition (from ProcessSteps at generation time)
                         if (report.RecipeSteps.Count > 0)
                         {
                             column.Item().Text("Séquence chronologique des étapes").SemiBold().FontSize(14);
@@ -94,6 +106,7 @@ public class PdfService
                             }
                         }
 
+                        // Actual run timeline collected by AppState during Execute
                         if (report.Steps.Count > 0)
                         {
                             column.Item().Text("Timeline d'exécution PackML").SemiBold().FontSize(14);
@@ -139,5 +152,6 @@ public class PdfService
             });
         });
 
+    /// <summary>Absolute path under wwwroot/reports for a given file name.</summary>
     public string GetReportPath(string fileName) => Path.Combine(_reportsDirectory, fileName);
 }

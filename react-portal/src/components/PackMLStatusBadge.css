@@ -6,6 +6,7 @@
   border-radius: 12px;
   border: 1px solid #2f3d52;
   background: #151d2a;
+  min-width: 0;
 }
 
 .packml-badge .dot {
@@ -14,6 +15,12 @@
   border-radius: 50%;
   background: currentColor;
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.packml-badge > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
 }
 
 .packml-badge .eyebrow {
@@ -28,6 +35,7 @@
   font-size: 18px;
   font-weight: 800;
   color: #e8eef7;
+  overflow-wrap: anywhere;
 }
 
 .packml-badge .sub {
@@ -39,6 +47,8 @@
   margin-left: auto;
   font-size: 12px;
   font-weight: 700;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .packml-badge .conn.on { color: #8ce99a; }
@@ -48,3 +58,22 @@
 .tone-warn { color: #f59f00; border-color: rgba(245, 159, 0, 0.45); }
 .tone-alarm { color: #e03131; border-color: rgba(224, 49, 49, 0.45); }
 .tone-neutral { color: #74c0fc; }
+
+@media (max-width: 480px) {
+  .packml-badge {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .packml-badge .value {
+    font-size: 16px;
+  }
+
+  .packml-badge .conn {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+    padding-left: 26px;
+  }
+}
