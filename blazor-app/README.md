@@ -36,10 +36,37 @@ Requires: .NET 8, TwinCAT Message Router, PLC `ReceipeManager` in Run (port **85
 | Report history | `report-history.json` |
 | PDF files | `wwwroot/reports/report_{id}.pdf` |
 
-## Auth
+## Auth / login
 
-- **HMI** — Register / Sign in in the header (Blazor circuit session)
-- **API / React** — same account → `POST /api/auth/login` → JWT Bearer
+One user store (`Data/auth.db` via LiteDB), two session modes.
+
+```
+Register / Sign in (Blazor header)
+              │
+              ▼
+        AuthService  ──►  auth.db
+        (hash passwords)     │
+              │              │
+              ├── HMI ──► AuthSessionService (in-memory Blazor circuit)
+              │              lost on browser refresh
+              │
+              └── React ──► POST /api/auth/login
+                              │
+                              ▼
+                         JwtTokenService → JWT
+                              │
+                              ▼
+                    React localStorage + Bearer on /api/*
+```
+
+| Piece | Role |
+|-------|------|
+| `AuthService` | Register / Login; username ≥ 3 chars, password ≥ 6; `PasswordHasher`; unique username |
+| `AuthSessionService` | HMI only — keeps user in memory for the SignalR circuit (no JWT) |
+| `AuthController` | `POST /api/auth/login` — validates via `AuthService`, returns JWT |
+| `JwtTokenService` | Signs token (HMAC, issuer/audience/secret from `Jwt` config, default 12 h) |
+
+**Typical flow:** create the account once with **Register** in the Blazor header, then use the same username/password on the React portal. Protected API routes (`recipes`, `favorites`, `reports`, …) require `Authorization: Bearer <token>`.
 
 ## REST API
 
